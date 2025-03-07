@@ -11,6 +11,6 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::apiResource('v1/events', EventsController::class)->only(['index']);
-Route::get('v1/events/{event}', [TicketsController::class, 'index']);
+Route::get('v1/events/{event}', [EventsController::class, 'show']);
 
 Route::get('v1/users/{users}', [UsersController::class, 'show']);
