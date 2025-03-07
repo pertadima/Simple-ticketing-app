@@ -15,4 +15,9 @@ class Events extends Model
     {
         return $this->hasMany(Tickets::class, 'event_id');
     }
+
+    public function images()
+    {
+        return $this->hasMany(EventImages::class, 'event_id');
+    }
 }
