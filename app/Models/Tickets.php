@@ -18,21 +18,21 @@ class Tickets extends Model
 
     public function event()
     {
-        return $this->belongsTo(Event::class, 'event_id');
+        return $this->belongsTo(Events::class, 'event_id');
     }
 
     public function category()
     {
-        return $this->belongsTo(TicketCategory::class, 'category_id');
+        return $this->belongsTo(TicketCategories::class, 'category_id');
     }
 
     public function type()
     {
-        return $this->belongsTo(TicketType::class, 'type_id');
+        return $this->belongsTo(TicketTypes::class, 'type_id');
     }
 
     public function orderDetails()
     {
-        return $this->hasMany(OrderDetail::class, 'ticket_id');
+        return $this->hasMany(OrderDetails::class, 'ticket_id');
     }
 }

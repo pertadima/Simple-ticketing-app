@@ -20,8 +20,7 @@ class EventsResource extends JsonResource
             'date' => $this->date,
             'location' => $this->location,
             'description' => $this->description,
-            'images' => $this->images->pluck('image_url'),
-            'tickets' => TicketsResource::collection($this->whenLoaded('tickets'))
+            'images' => $this->images->pluck('image_url')
         ];
     }
 }
