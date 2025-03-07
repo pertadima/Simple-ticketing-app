@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Events;
 use Illuminate\Http\Request;
 use App\Http\Resources\EventsResource;
-use App\Http\Resources\TicketsResource;
+use App\Models\Tickets;
+
+use groupedCategory;
 
 class TicketsController extends Controller
 {
@@ -23,11 +25,29 @@ class TicketsController extends Controller
             'success' => true,
             'data' => [
                 'event' => new EventsResource($event),
-                'tickets' => TicketsResource::collection($tickets)
+                'tickets' => $this->groupedCategory($tickets)
             ]
         ]);
     }
 
+
+    private function groupedCategory($tickets) {
+        return $tickets->groupBy('category.name')->map(function ($items, $category) {
+            return [
+                'category' => $category,
+                'tickets' => $items->map(function ($ticket) {
+                    return [
+                        'id' => $ticket->id,
+                        'type' => $ticket->type->name,
+                        'price' => $ticket->price,
+                        'quota' => $ticket->quota,
+                        'min_age' => $ticket->min_age,
+                        'requires_id_verification' => (bool)$ticket->requires_id_verification
+                    ];
+                })
+            ];
+        })->values();
+    }
     /**
      * Store a newly created resource in storage.
      */
