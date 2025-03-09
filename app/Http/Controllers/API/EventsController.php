@@ -18,7 +18,11 @@ class EventsController extends Controller
             ->orderBy('date', 'asc')
             ->paginate(10);
 
-        return EventsResource::collection($events);
+        return response()->json([
+            'data' => [
+                'events' => EventsResource::collection($events)
+            ]
+        ]);
     }
 
     /**
@@ -43,7 +47,6 @@ class EventsController extends Controller
         ->get();
 
         return response()->json([
-            'success' => true,
             'data' => [
                 'event' => new EventsResource($event),
                 'tickets' => $this->groupedCategory($tickets)
