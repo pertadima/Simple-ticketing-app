@@ -76,7 +76,7 @@ class EventsController extends Controller
                 'category' => $category,
                 'tickets' => $items->map(function ($ticket) {
                     return [
-                        'id' => $ticket->id,
+                        'id' => $ticket->ticket_id,
                         'type' => $ticket->type->name,
                         'price' => $ticket->price,
                         'quota' => $ticket->quota,
