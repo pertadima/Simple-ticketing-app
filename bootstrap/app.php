@@ -29,16 +29,4 @@ return Application::configure(basePath: dirname(__DIR__))
 
             throw $e;
         });
-
-        $exceptions->renderable(function (TooManyRequestsHttpException $e, $request) {
-            if ($request->json()) {
-                return response()->json(['errors' => [
-                    'error_code' => 429,
-                    'title' => 'Too many requests',
-                    'message' => 'Too many requests, try again later'
-                ]], 429);
-            }
-
-            throw $e;
-        });
     })->create();
