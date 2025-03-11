@@ -27,6 +27,7 @@ class AuthController extends Controller
 
         $user = Users::where('email', $request->email)->firstOrFail();
 
+        $user->tokens()->delete();
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -74,6 +75,7 @@ class AuthController extends Controller
             'remember_token' => Str::random(10)
         ]);
 
+        $user->tokens()->delete();
         return response()->json([
             'user' => new UsersResource($user),
             'access_token' => 'Bearer ' . $user->createToken('auth_token')->plainTextToken,

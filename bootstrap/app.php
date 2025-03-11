@@ -1,11 +1,10 @@
 <?php
 
-use DanHarrin\LivewireRateLimiting\Exceptions\TooManyRequestsException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -25,6 +24,18 @@ return Application::configure(basePath: dirname(__DIR__))
                     'title' => 'Not Found',
                     'message' => 'Resource not found'
                 ]], 404);
+            }
+
+            throw $e;
+        });
+
+        $exceptions->renderable(function (AuthenticationException $e, $request) {
+            if ($request->json()) {
+                return response()->json(['errors' => [
+                    'error_code' => 401,
+                    'title' => 'Unauthorized',
+                    'message' => 'Token invalid'
+                ]], 401);
             }
 
             throw $e;
