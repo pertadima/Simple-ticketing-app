@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\EventsController;
 use App\Http\Controllers\API\UsersController;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\OrdersController;
 
 Route::prefix('v1')->group(function () {
     Route::apiResource('events', EventsController::class)->only(['index']);
@@ -11,6 +12,8 @@ Route::prefix('v1')->group(function () {
     
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('users/{users}', [UsersController::class, 'show']);
+
+        Route::post('orders/create', [OrdersController::class, 'store']);
     });
     
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login');

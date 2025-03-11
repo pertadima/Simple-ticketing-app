@@ -13,11 +13,11 @@ class OrderDetails extends Model
 
     public function order()
     {
-        return $this->belongsTo(Order::class, 'order_id');
+        return $this->belongsTo(Orders::class, 'order_id');
     }
 
     public function ticket()
     {
-        return $this->belongsTo(Ticket::class, 'ticket_id');
+        return $this->belongsTo(Tickets::class, 'ticket_id');
     }
 }
