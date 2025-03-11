@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\OrdersResource;
 use Illuminate\Http\Request;
 use App\Http\Resources\UsersResource;
 use App\Models\Users;
@@ -31,6 +32,18 @@ class UsersController extends Controller
     public function show(Users $users)
     {
         return new UsersResource($users);
+    }
+
+    public function orders($userId)
+    {
+        $user = Users::findOrFail($userId);
+        $orders = $user->orders;
+
+        return response()->json([
+            'data' => [
+                'orders' => OrdersResource::collection($orders)
+            ]
+        ]);
     }
 
     /**

@@ -35,6 +35,18 @@ class Users extends Authenticatable
         return $this->hasMany(Orders::class, 'user_id');
     }
 
+    public function tickets()
+    {
+        return $this->hasManyThrough(
+            Tickets::class,
+            OrderDetails::class,
+            'order_id', // Foreign key on order_details table
+            'ticket_id', // Foreign key on tickets table
+            'user_id',   // Local key on users table
+            'id'         // Local key on orders table
+        );
+    }
+
     public function age()
     {
         return $this->birth_date ? now()->diffInYears($this->birth_date) : null;

@@ -35,6 +35,10 @@ class OrdersController extends Controller
             $user = $request->user();
             $orderData = $this->validateAndProcessOrder($request->tickets, $user);
     
+            if (isset($orderData['errors'])) {
+                return response()->json(['errors' => $orderData['errors']], 422);
+            }
+            
             $order = Orders::create([
                 'user_id' => $user->user_id,
                 'total_amount' => $orderData['total'],
@@ -96,7 +100,7 @@ class OrdersController extends Controller
             }
 
             if (!empty($errors)) {
-                abort(422, ['errors' => $errors]);
+                return ['errors' => $errors];
             }
 
             $subtotal = $ticket->price * $item['quantity'];

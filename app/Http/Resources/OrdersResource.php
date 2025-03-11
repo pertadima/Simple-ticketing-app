@@ -20,7 +20,7 @@ class OrdersResource extends JsonResource
             'total_amount' => (float) $this->total_amount,
             'status' => $this->status,
             'order_date' => $this->created_at->toIso8601String(),
-            'tickets' => $this->formatTickets(),
+            'order_detail' => $this->formatTickets(),
 
         ];
     }
@@ -29,6 +29,10 @@ class OrdersResource extends JsonResource
     {
         return $this->orderDetails->map(function ($detail) {
             return [
+                'event_name' => $detail->ticket->event->name,
+                'event_location' => $detail->ticket->event->location,
+                'event_date' => $detail->ticket->event->date,
+                'ticket_name' => $detail->ticket->name,
                 'ticket_id' => $detail->ticket_id,
                 'category' => $detail->ticket->category->name,
                 'type' => $detail->ticket->type->name,
