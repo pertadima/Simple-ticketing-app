@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use App\Helpers\ApiErrorHelper;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -39,6 +40,23 @@ return Application::configure(basePath: dirname(__DIR__))
                     status: 401,
                     detail: 'Authentication credentials are missing or invalid'
                 ), 401);
+            }
+
+            throw $e;
+        });
+
+        $exceptions->renderable(function (MethodNotAllowedHttpException $e, $request) {
+            if ($request->json()) {
+                $apiErrorHelper = new ApiErrorHelper();
+                return response()->json($apiErrorHelper->formatError(
+                    title: 'Method not allowed',
+                    status: 405,
+                    detail: 'The HTTP method used is not allowed for this resource. Please check the allowed methods and try again.',
+                    errors: [
+                        'requested_method' . ' ' . $request->method(),
+                        'allowed_methods' . ' ' . $e->getHeaders()['Allow']
+                    ]
+                ), 405);
             }
 
             throw $e;
