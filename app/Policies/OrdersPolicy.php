@@ -36,12 +36,6 @@ class OrdersPolicy
      */
     public function update(Users $users, Orders $orders): bool
     {
-        $output = new \Symfony\Component\Console\Output\ConsoleOutput();
-        $output->writeln("'Policy Check', [
-            'user_id' => $users->user_id,
-            'order_user_id' => $orders->user_id,
-            'match' => $users->user_id === $orders->user_id
-        ]'");
         return $users->user_id === $orders->user_id;
     }
 
