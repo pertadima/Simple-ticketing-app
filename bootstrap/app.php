@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use App\Helpers\ApiErrorHelper;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -19,11 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->renderable(function (NotFoundHttpException $e, $request) {
             if ($request->json()) {
-                return response()->json(['errors' => [
-                    'error_code' => 404,
-                    'title' => 'Not Found',
-                    'message' => 'Resource not found'
-                ]], 404);
+                $apiErrorHelper = new ApiErrorHelper();
+                return response()->json($apiErrorHelper->formatError(
+                    title: 'Resource Not Found',
+                    status: 404,
+                    detail: 'The requested resource could not be found. Please check the URL and try again.'
+                ), 404);
             }
 
             throw $e;
@@ -31,11 +33,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->renderable(function (AuthenticationException $e, $request) {
             if ($request->json()) {
-                return response()->json(['errors' => [
-                    'error_code' => 401,
-                    'title' => 'Unauthorized',
-                    'message' => 'Token invalid'
-                ]], 401);
+                $apiErrorHelper = new ApiErrorHelper();
+                return response()->json($apiErrorHelper->formatError(
+                    title: 'Unauthenticated',
+                    status: 401,
+                    detail: 'Authentication credentials are missing or invalid'
+                ), 401);
             }
 
             throw $e;

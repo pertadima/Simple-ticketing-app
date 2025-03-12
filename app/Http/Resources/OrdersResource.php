@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -31,7 +32,7 @@ class OrdersResource extends JsonResource
             return [
                 'event_name' => $detail->ticket->event->name,
                 'event_location' => $detail->ticket->event->location,
-                'event_date' => $detail->ticket->event->date,
+                'event_date' => Carbon::parse($detail->ticket->event->date)->toIso8601String(),
                 'ticket_name' => $detail->ticket->name,
                 'ticket_id' => $detail->ticket_id,
                 'category' => $detail->ticket->category->name,

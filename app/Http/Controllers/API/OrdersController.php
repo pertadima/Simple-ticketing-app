@@ -9,6 +9,7 @@ use App\Models\Tickets;
 use App\Models\Users;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Helpers\ApiErrorHelper;
 
 class OrdersController extends Controller
 {
@@ -25,6 +26,7 @@ class OrdersController extends Controller
      */
     public function store(Request $request)
     {
+        $apiErrorHelper = new ApiErrorHelper();
         $request->validate([
             'tickets' => 'required|array|min:1',
             'tickets.*.ticket_id' => 'required|exists:tickets,ticket_id',
