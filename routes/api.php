@@ -12,10 +12,11 @@ Route::prefix('v1')->group(function () {
     
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('users/{users}', [UsersController::class, 'show']);
-        Route::get('users/{users}/orders', [UsersController::class, 'orders']);
-        Route::post('users/{users}/logout', [AuthController::class, 'logout']);
+        Route::get('users/{user}/orders', [UsersController::class, 'orders']);
+        Route::post('users/{user}/logout', [AuthController::class, 'logout']);
 
         Route::post('orders/create', [OrdersController::class, 'store']);
+        Route::patch('orders/{order}/pay', [OrdersController::class, 'markAsPaid'])->name('orders.pay');
     });
     
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrdersResource;
 use App\Models\Orders;
@@ -10,9 +11,11 @@ use App\Models\Users;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\ApiErrorHelper;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class OrdersController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Display a listing of the resource.
      */
@@ -124,5 +127,28 @@ class OrdersController extends Controller
             'total' => $total,
             'items' => $items
         ];
+    }
+
+    public function markAsPaid(Orders $order)
+    {
+        $this->authorize('update', $order);
+
+        $apiErrorHelper = new ApiErrorHelper();
+        if ($order->status !== OrderStatus::PENDING) {
+            return response()->json($apiErrorHelper->formatError(
+                title: 'Invalid Order Status',
+                status: 422,
+                detail: 'Order cannot be paid in its current status',
+            ), 422);
+        }
+
+        return DB::transaction(function () use ($order) {
+            $order->update([
+                'status' => OrderStatus::PAID,
+                'paid_at' => now()
+            ]);
+
+            return new OrdersResource($order->fresh()->load('orderDetails.ticket'));
+        });
     }
 }
