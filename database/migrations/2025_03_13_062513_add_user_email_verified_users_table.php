@@ -24,7 +24,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // 1. Drop the column
-            $$table->boolean('id_verified')->default(false);
+            $table->boolean('id_verified')->default(false);
             $table->dropColumn('email_verified');
         });
     }

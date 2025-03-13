@@ -80,7 +80,6 @@ class EventsController extends Controller
                         'type' => $ticket->type->name,
                         'price' => $ticket->price,
                         'quota' => $ticket->quota,
-                        'min_age' => $ticket->min_age,
                         'requires_id_verification' => (bool)$ticket->requires_id_verification
                     ];
                 })

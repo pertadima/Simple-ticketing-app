@@ -41,7 +41,6 @@ class OrdersResource extends JsonResource
                 'unit_price' => (float) $detail->price,
                 'subtotal' => (float) ($detail->price * $detail->quantity),
                 'requires_id_verification' => (bool) $detail->ticket->requires_id_verification,
-                'min_age' => $detail->ticket->min_age
             ];
         });
     }

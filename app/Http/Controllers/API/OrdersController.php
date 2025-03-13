@@ -32,7 +32,7 @@ class OrdersController extends Controller
         $request->validate([
             'tickets' => 'required|array|min:1',
             'tickets.*.ticket_id' => 'required|exists:tickets,ticket_id',
-            'tickets.*.quantity' => 'required|integer|min:1',
+            'tickets.*.quantity' => 'required|integer|min:1'
         ]);
     
         return DB::transaction(function () use ($request) {
@@ -52,7 +52,9 @@ class OrdersController extends Controller
             $order = Orders::create([
                 'user_id' => $user->user_id,
                 'total_amount' => $orderData['total'],
-                'status' => 'pending'
+                'status' => OrderStatus::PENDING,
+                'id_card_type' => $orderData['card_type'],
+                'id_card_number' => $orderData['card_number']
             ]);
     
             $order->orderDetails()->createMany($orderData['items']);
@@ -105,9 +107,18 @@ class OrdersController extends Controller
                 $errors[] = "Ticket ID {$ticket->ticket_id} has only {$ticket->quota} available";
             }
 
-            // Age verification
-            if ($ticket->min_age && $user->age() < $ticket->min_age) {
-                $errors[] = "Ticket ID {$ticket->ticket_id} requires minimum age of {$ticket->min_age}";
+            if ($ticket->requires_id_verification) {                
+                if ($item['quantity'] > 1) {
+                    $errors[] = "Ticket ID {$ticket->ticket_id} with ID verification can only be purchased one at a time";
+                }
+
+                if (empty($item['card_number'])) {
+                    $errors[] = "Card number is required for ticket type {$ticket->type->name} category {$ticket->category->name}";
+                }
+
+                if (empty($item['card_type']) || !in_array($item['card_type'], ['driving_license', 'national', 'passport'])) {
+                    $errors[] = "Card type is required and must be one of 'driving_license', 'national', or 'passport' for ticket ID {$ticket->ticket_id}";
+                }
             }
 
             if (!empty($errors)) {
@@ -131,7 +142,9 @@ class OrdersController extends Controller
 
         return [
             'total' => $total,
-            'items' => $items
+            'items' => $items,
+            'card_type' => $item['card_type'] ?? null,
+            'card_number' => $item['card_number'] ?? null,
         ];
     }
 

@@ -46,9 +46,4 @@ class Users extends Authenticatable
             'id'         // Local key on orders table
         );
     }
-
-    public function age()
-    {
-        return $this->birth_date ? now()->diffInYears($this->birth_date) : null;
-    }
 }

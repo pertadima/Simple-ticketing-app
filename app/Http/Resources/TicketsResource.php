@@ -20,7 +20,6 @@ class TicketsResource extends JsonResource
             'type' => $this->type->name,
             'price' => $this->price,
             'quota' => $this->quota,
-            'min_age' => $this->min_age,
             'requires_id_verification' => $this->requires_id_verification
         ];
     }

@@ -12,8 +12,7 @@ class Tickets extends Model
     protected $primaryKey = 'ticket_id';
     protected $fillable = [
         'event_id', 'category_id', 'type_id', 
-        'price', 'quota', 'sold_count', 
-        'min_age', 'requires_id_verification'
+        'price', 'quota', 'sold_count', 'requires_id_verification'
     ];
 
     public function event()
