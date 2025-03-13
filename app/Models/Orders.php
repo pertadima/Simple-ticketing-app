@@ -14,7 +14,7 @@ class Orders extends Model
     
     protected $fillable = [
         'user_id', 'total_amount', 'status',
-        'id_card_type', 'id_card_number', 'id_verified'
+        'id_card_type', 'id_card_number', 'email_verified'
     ];
 
     protected $casts = [

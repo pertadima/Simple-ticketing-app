@@ -51,9 +51,4 @@ class Users extends Authenticatable
     {
         return $this->birth_date ? now()->diffInYears($this->birth_date) : null;
     }
-
-    public function getIdVerifiedAttribute()
-    {
-        return (bool) $this->attributes['id_verified'];
-    }
 }

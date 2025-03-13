@@ -29,7 +29,6 @@ class OrdersController extends Controller
      */
     public function store(Request $request)
     {
-        $apiErrorHelper = new ApiErrorHelper();
         $request->validate([
             'tickets' => 'required|array|min:1',
             'tickets.*.ticket_id' => 'required|exists:tickets,ticket_id',
@@ -41,7 +40,13 @@ class OrdersController extends Controller
             $orderData = $this->validateAndProcessOrder($request->tickets, $user);
     
             if (isset($orderData['errors'])) {
-                return response()->json(['errors' => $orderData['errors']], 422);
+                $apiErrorHelper = new ApiErrorHelper();
+                return response()->json($apiErrorHelper->formatError(
+                    title: 'Failed to create order',
+                    status: 422,
+                    detail: 'Order cannot be created due to the following errors',
+                    errors: $orderData['errors']
+                ), 422);
             }
             
             $order = Orders::create([
@@ -86,17 +91,18 @@ class OrdersController extends Controller
         $items = [];
         $errors = [];
 
+               // ID verification check
+        if (!$user->email_verified) {
+            $errors[] = "You must verified your email first before making a purchase";
+            return ['errors' => $errors];
+        }
+
         foreach ($tickets as $index => $item) {
             $ticket = Tickets::findOrFail($item['ticket_id']);
 
             // Check ticket availability
             if ($ticket->quota < $item['quantity']) {   
                 $errors[] = "Ticket ID {$ticket->ticket_id} has only {$ticket->quota} available";
-            }
-
-            // ID verification check
-            if ($ticket->requires_id_verification && !$user->id_verified) {
-                $errors[] = "Ticket ID {$ticket->ticket_id} requires ID verification";
             }
 
             // Age verification
