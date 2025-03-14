@@ -18,8 +18,7 @@ class UsersResource extends JsonResource
             'user_id' => $this->user_id,
             'email' => $this->email,
             'full_name' => $this->full_name,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'email_veried' => $this->email_verified,
             'orders' => OrdersResource::collection($this->whenLoaded('orders'))
         ];
     }
