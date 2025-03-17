@@ -63,16 +63,16 @@ return Application::configure(basePath: dirname(__DIR__))
             throw $e;
         });
 
-        // $exceptions->renderable(function (AccessDeniedHttpException $e, $request) {
-        //     if ($request->json()) {
-        //         $apiErrorHelper = new ApiErrorHelper();
-        //         return response()->json($apiErrorHelper->formatError(
-        //             title: 'Access Denied',
-        //             status: 403,
-        //             detail: 'You do not have permission to access this resource. Please contact the administrator if you believe this is an error.'
-        //         ), 403);
-        //     }
+        $exceptions->renderable(function (AccessDeniedHttpException $e, $request) {
+            if ($request->json()) {
+                $apiErrorHelper = new ApiErrorHelper();
+                return response()->json($apiErrorHelper->formatError(
+                    title: 'Access Denied',
+                    status: 403,
+                    detail: 'You do not have permission to access this resource. Please contact the administrator if you believe this is an error.'
+                ), 403);
+            }
 
-        //     throw $e;
-        // });
+            throw $e;
+        });
     })->create();

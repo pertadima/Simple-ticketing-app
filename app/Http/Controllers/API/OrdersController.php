@@ -90,108 +90,119 @@ class OrdersController extends Controller
 
     private function validateAndProcessOrder(array $tickets, Users $user)
     {
-        $errors = [];
-        $items = [];
-        $total = 0;
-    
-        // Pre-check email verification
         if (!$user->email_verified) {
             return ['errors' => ["You must verify your email before making a purchase"]];
         }
-    
-        // Aggregate quantities per ticket and get all ticket IDs
-        $ticketQuantities = [];
-        $ticketIds = [];
-        foreach ($tickets as $item) {
-            $ticketId = $item['ticket_id'];
-            $ticketQuantities[$ticketId] = ($ticketQuantities[$ticketId] ?? 0) + $item['quantity'];
-            $ticketIds[] = $ticketId;
-        }
-    
-        // Get all tickets with lock to prevent race conditions
+
+        $errors = [];
+        $items = [];
+        $total = 0;
+
+        // 1. Aggregate quantities and get tickets in single collection pipeline
+        $ticketData = collect($tickets)
+            ->groupBy('ticket_id')
+            ->map(function ($group, $ticketId) {
+                return [
+                    'total_quantity' => $group->sum('quantity'),
+                    'items' => $group,
+                    'ticket_id' => $ticketId
+                ];
+            });
+
+        // 2. Get tickets with lock and validate quotas
         $ticketsCollection = Tickets::with(['type', 'category'])
-            ->whereIn('ticket_id', array_unique($ticketIds))
+            ->whereIn('ticket_id', $ticketData->keys())
             ->lockForUpdate()
             ->get()
             ->keyBy('ticket_id');
-    
-        // Validate ticket quotas first
-        foreach ($ticketQuantities as $ticketId => $quantity) {
-            $ticket = $ticketsCollection[$ticketId] ?? null;
-            
-            if (!$ticket) {
-                $errors[] = "Ticket ID {$ticketId} does not exist";
-                continue;
-            }
-    
-            if ($ticket->quota < $quantity) {
-                $errors[] = "Ticket ID {$ticketId} has only {$ticket->quota} available";
-            }
-        }
-    
-        // Validate ID requirements and unique card numbers
+
+        // 3. Single validation loop combining quota and ID checks
         $idCards = [];
-        foreach ($tickets as $index => $item) {
-            $ticket = $ticketsCollection[$item['ticket_id']];
+        $ticketData->each(function ($data) use (&$errors, $ticketsCollection, &$idCards) {
+            $ticket = $ticketsCollection[$data['ticket_id']] ?? null;
             
-            if ($ticket->requires_id_verification) {
-                $cardNumber = $item['card_number'] ?? null;
-                $cardType = $item['card_type'] ?? null;
-    
-                // Validate card presence and type
-                if (empty($cardNumber)) {
-                    $errors[] = "Card number required for {$ticket->type->name} - {$ticket->category->name}";
-                }
-                
-                if (empty($cardType) || !in_array($cardType, IdCardType::values())) {
-                    $validTypes = implode(', ', IdCardType::values());
-                    $errors[] = "Invalid card type for ticket ID {$ticket->ticket_id}. Valid types: {$validTypes}";
-                }
-    
-                // Check quantity limit for ID-required tickets
-                if ($item['quantity'] > 1) {
-                    $errors[] = "Ticket ID {$ticket->ticket_id} (ID required) limited to 1 per purchase";
-                }
-    
-                // Track card numbers per ticket type
-                $key = "{$cardNumber}";
-                if (isset($idCards[$key])) {
-                    $errors[] = "Duplicate card number {$cardNumber}";
-                }
-                $idCards[$key] = true;
+            // Ticket existence check
+            if (!$ticket) {
+                $errors[] = "Ticket ID {$data['ticket_id']} does not exist";
+                return;
             }
-        }
-    
+
+            // Quota validation
+            if ($ticket->quota < $data['total_quantity']) {
+                $errors[] = "Ticket ID {$ticket->ticket_id} has only {$ticket->quota} available";
+            }
+
+            // ID verification checks
+            if ($ticket->requires_id_verification) {
+                collect($data['items'])->each(function ($item) use ($ticket, &$errors, &$idCards) {
+                    $this->validateIdRequirements($item, $ticket, $errors, $idCards);
+                });
+            }
+        });
+
         if (!empty($errors)) {
             return ['errors' => $errors];
         }
-    
-        // Process valid order
-        foreach ($tickets as $item) {
-            $ticket = $ticketsCollection[$item['ticket_id']];
-            $quantity = $item['quantity'];
+
+        // 4. Single processing loop with inventory update
+        $ticketData->each(function ($data) use (&$items, &$total, $ticketsCollection) {
+            $ticket = $ticketsCollection[$data['ticket_id']];
             
-            // Create order item
-            $subtotal = $ticket->price * $quantity;
-            $total += $subtotal;
-            
-            $items[] = [
-                'ticket_id' => $ticket->ticket_id,
-                'quantity' => $quantity,
-                'price' => $ticket->price,
-                'subtotal' => $subtotal
-            ];
-    
-            // Update inventory
-            $ticket->decrement('quota', $quantity);
-            $ticket->increment('sold_count', $quantity);
-        }
-    
+            collect($data['items'])->each(function ($item) use ($ticket, &$items, &$total) {
+                $this->processItem($item, $ticket, $items, $total);
+            });
+
+            $ticket->decrement('quota', $data['total_quantity']);
+            $ticket->increment('sold_count', $data['total_quantity']);
+        });
+
         return [
             'total' => $total,
             'items' => $items,
             'card_type' => $item['card_type'] ?? null,
             'card_number' => $item['card_number'] ?? null
+        ];
+    }
+
+    private function validateIdRequirements($item, $ticket, &$errors, &$idCards)
+    {
+        $cardNumber = $item['card_number'] ?? null;
+        $cardType = $item['card_type'] ?? null;
+
+        // Validate card presence
+        if (empty($cardNumber)) {
+            $errors[] = "Card number required for {$ticket->type->name} - {$ticket->category->name}";
+        }
+
+        // Validate card type
+        if (empty($cardType) || !in_array($cardType, IdCardType::values())) {
+            $validTypes = implode(', ', IdCardType::values());
+            $errors[] = "Invalid card type for ticket ID {$ticket->ticket_id}. Valid types: {$validTypes}";
+        }
+
+        // Validate quantity limit
+        if ($item['quantity'] > 1) {
+            $errors[] = "Ticket ID {$ticket->ticket_id} (ID required) limited to 1 per purchase";
+        }
+
+        // Check duplicate cards
+        $key = "{$ticket->ticket_id}-{$cardNumber}";
+        if (isset($idCards[$key])) {
+            $errors[] = "Duplicate card number {$cardNumber} for ticket ID {$ticket->ticket_id}";
+        }
+        $idCards[$key] = true;
+    }
+
+    private function processItem($item, $ticket, &$items, &$total)
+    {
+        $subtotal = $ticket->price * $item['quantity'];
+        $total += $subtotal;
+
+        $items[] = [
+            'ticket_id' => $ticket->ticket_id,
+            'quantity' => $item['quantity'],
+            'price' => $ticket->price,
+            'subtotal' => $subtotal
         ];
     }
 
