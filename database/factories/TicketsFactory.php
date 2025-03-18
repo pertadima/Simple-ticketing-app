@@ -44,7 +44,6 @@ class TicketsFactory extends Factory
             'price' => $this->faker->numberBetween(50, 500),
             'quota' => $this->faker->numberBetween(50, 200),
             'sold_count' => 0,
-            'min_age' => $requiresId ? $this->faker->numberBetween(18, 21) : null,
             'requires_id_verification' => $requiresId,
         ];
     }
