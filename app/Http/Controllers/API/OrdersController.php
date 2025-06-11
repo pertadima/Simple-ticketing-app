@@ -12,6 +12,8 @@ use App\Models\Users;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\ApiErrorHelper;
+use App\Models\VoucherRedemptions;
+use App\Models\Vouchers;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class OrdersController extends Controller
@@ -33,13 +35,26 @@ class OrdersController extends Controller
         $request->validate([
             'tickets' => 'required|array|min:1',
             'tickets.*.ticket_id' => 'required|exists:tickets,ticket_id',
-            'tickets.*.quantity' => 'required|integer|min:1'
+            'tickets.*.quantity' => 'required|integer|min:1',
+            'voucher_code' => 'nullable|string|max:255'
         ]);
     
         return DB::transaction(function () use ($request) {
             $user = $request->user();
-            $orderData = $this->validateAndProcessOrder($request->tickets, $user);
+            $voucher = null;
+            $errors = [];
+            $orderData = $this->validateAndProcessOrder($request->tickets, $user, $voucher);
     
+            if ($request->filled('voucher_code')) {
+                $voucherValidation = $this->validateVoucher($request->voucher_code, $user, $request->tickets);
+                
+                if (isset($voucherValidation['errors'])) {
+                    $errors = array_merge($errors, $voucherValidation['errors']);
+                } else {
+                    $voucher = $voucherValidation['voucher'];
+                }
+            }
+
             if (isset($orderData['errors'])) {
                 $apiErrorHelper = new ApiErrorHelper();
                 return response()->json($apiErrorHelper->formatError(
@@ -55,11 +70,23 @@ class OrdersController extends Controller
                 'total_amount' => $orderData['total'],
                 'status' => OrderStatus::PENDING,
                 'id_card_type' => $orderData['card_type'],
-                'id_card_number' => $orderData['card_number']
+                'id_card_number' => $orderData['card_number'],
+                'voucher_id' => $voucher?->voucher_id,
+                'discount_amount' => $orderData['discount'] ?? 0,
             ]);
     
             $order->orderDetails()->createMany($orderData['items']);
     
+             // Update voucher usage
+            if ($voucher) {
+                $voucher->increment('used_count');
+                VoucherRedemptions::create([
+                    'voucher_id' => $voucher->voucher_id,
+                    'user_id' => $user->user_id,
+                    'order_id' => $order->order_id
+                ]);
+            }
+
             return new OrdersResource($order->load('orderDetails.ticket'));
         });
     }
@@ -88,7 +115,47 @@ class OrdersController extends Controller
         //
     }
 
-    private function validateAndProcessOrder(array $tickets, Users $user)
+    private function validateVoucher(?string $code, Users $user, array $tickets): array
+    {
+        $voucher = Vouchers::where('code', $code)->first();
+
+        if (!$voucher) {
+            return ['errors' => ['Invalid voucher code']];
+        }
+
+        // Check voucher validity
+        if (now()->gt($voucher->valid_until)) {
+            return ['errors' => ['Voucher has expired']];
+        }
+
+        if ($voucher->used_count >= $voucher->usage_limit) {
+            return ['errors' => ['Voucher has been fully redeemed']];
+        }
+
+        // Check user redemption limit
+        $userRedemptions = VoucherRedemptions::where('voucher_id', $voucher->voucher_id)
+            ->where('user_id', $user->user_id)
+            ->count();
+
+        if ($userRedemptions >= $voucher->usage_limit) {
+            return ['errors' => ['You have already used this voucher']];
+        }
+
+        // Check event-specific validation
+        if ($voucher->type === 'specific') {
+            $eventIds = collect($tickets)
+                ->map(fn($t) => Tickets::find($t['ticket_id'])->event_id)
+                ->unique();
+
+            if ($eventIds->count() > 1 || $eventIds->first() != $voucher->event_id) {
+                return ['errors' => ['Voucher is not valid for selected events']];
+            }
+        }
+
+        return ['voucher' => $voucher];
+    }
+
+    private function validateAndProcessOrder(array $tickets, Users $user, ?Vouchers $voucher)
     {
         if (!$user->email_verified) {
             return ['errors' => ["You must verify your email before making a purchase"]];
@@ -97,6 +164,7 @@ class OrdersController extends Controller
         $errors = [];
         $items = [];
         $total = 0;
+        $discount = 0;
 
         // 1. Aggregate quantities and get tickets in single collection pipeline
         $ticketData = collect($tickets)
@@ -156,6 +224,16 @@ class OrdersController extends Controller
             $ticket->increment('sold_count', $data['total_quantity']);
         });
 
+        if ($voucher) {
+            $discount = match ($voucher->discount_type) {
+                'percentage' => $total * ($voucher->discount / 100),
+                'fixed' => min($voucher->discount, $total),
+                default => 0
+            };
+    
+            $total -= $discount;
+        }
+        
         return [
             'total' => $total,
             'items' => $items,
