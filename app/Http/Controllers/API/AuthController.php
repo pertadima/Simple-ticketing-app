@@ -70,7 +70,7 @@ class AuthController extends Controller
                 title: 'Failed Validation',
                 status: 422,
                 detail: 'Cannot process the request due to validation errors',
-                errors: $validator->errors()->toArray()
+                errors: array_merge(...array_values($validator->errors()->toArray()))
             ), 422);
         }
 

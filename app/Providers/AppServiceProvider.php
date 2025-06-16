@@ -46,7 +46,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Registration rate limiter: 3 attempts per hour
         RateLimiter::for('register', function (Request $request) {
-            return Limit::perHour(3)
+            return Limit::perHour(20)
                 ->by($request->ip())
                 ->response(function (Request $request, array $headers) {
                     $apiErrorHelper = new ApiErrorHelper();
