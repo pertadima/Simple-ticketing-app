@@ -14,7 +14,7 @@ class EventsController extends Controller
      */
     public function index()
     {
-        $events = Events::with(['tickets.category', 'tickets.type'])
+        $events = Events::with(['tickets.category', 'tickets.type', 'categories'])
             ->orderBy('date', 'asc')
             ->paginate(10);
 

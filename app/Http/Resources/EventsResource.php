@@ -20,7 +20,13 @@ class EventsResource extends JsonResource
             'date' => $this->date,
             'location' => $this->location,
             'description' => $this->description,
-            'images' => $this->images->pluck('image_url')
+            'images' => $this->images->pluck('image_url'),
+            'categories' => $this->categories->map(function ($category) {
+                return [
+                    'id' => $category->category_id,
+                    'name' => $category->name, // adjust field names based on your EventCategory model
+                ];
+            })
         ];
     }
 }

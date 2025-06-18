@@ -20,4 +20,11 @@ class Events extends Model
     {
         return $this->hasMany(EventImages::class, 'event_id');
     }
+
+    public function categories()
+    {
+        return $this->belongsToMany(EventCategories::class, 'category_event', 'event_id', 'category_id')
+          ->withTimestamps();
+    }
+
 }

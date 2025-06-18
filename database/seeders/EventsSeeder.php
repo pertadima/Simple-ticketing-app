@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\EventCategories;
 use Illuminate\Database\Seeder;
 use App\Models\Events;
 use App\Models\TicketCategories;
@@ -36,6 +37,9 @@ class EventsSeeder extends Seeder
                     'type_id' => $combination[1],
                 ]);
             }
+
+            $eventCategories = EventCategories::inRandomOrder()->take(2)->pluck('category_id');
+            $event->categories()->syncWithoutDetaching($eventCategories);
         });
     }
 }
