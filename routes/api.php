@@ -4,12 +4,15 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\EventsController;
 use App\Http\Controllers\API\UsersController;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\EventsCategoryController;
 use App\Http\Controllers\API\OrdersController;
 
 Route::prefix('v1')->group(function () {
     Route::apiResource('events', EventsController::class)->only(['index']);
     Route::get('events/{event}', [EventsController::class, 'show']);
     
+    Route::apiResource('categories', EventsCategoryController::class)->only(['index']);
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('users/{users}', [UsersController::class, 'show']);
         Route::get('users/{user}/orders', [UsersController::class, 'orders']);
