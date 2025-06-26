@@ -70,6 +70,7 @@ class OrdersController extends Controller
             $order = Orders::create([
                 'user_id' => $user->user_id,
                 'total_amount' => $orderData['total'],
+                'discount_amount' => $orderData['discount'] ?? 0,
                 'status' => OrderStatus::PENDING
             ]);
     
@@ -230,12 +231,12 @@ class OrdersController extends Controller
             };
     
             Log::info("Voucher applied: {$voucher->code}, discount: {$discount}");
-            $total -= $discount;
         }
         
         return [
             'total' => $total,
             'items' => $items,
+            'discount' => $discount,
             'id_card_type' => $item['card_type'] ?? null,
             'id_card_number' => $item['card_number'] ?? null
         ];

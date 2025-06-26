@@ -39,7 +39,6 @@ class EventsSeeder extends Seeder
             }
 
             $eventCategories = EventCategories::inRandomOrder()->take(2)->pluck('category_id');
-            dd($eventCategories);
             $event->categories()->syncWithoutDetaching($eventCategories);
         });
     }

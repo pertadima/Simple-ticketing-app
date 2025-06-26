@@ -19,6 +19,7 @@ class OrdersResource extends JsonResource
             'order_id' => $this->order_id,
             'user_id' => $this->user_id,
             'total_amount' => (float) $this->total_amount,
+            'discount_amount' => (float) $this->discount_amount,
             'status' => $this->status,
             'order_date' => $this->created_at->toIso8601String(),
             'order_detail' => $this->formatTickets(),
