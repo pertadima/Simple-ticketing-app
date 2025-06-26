@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('order_details', function (Blueprint $table) {
-            $table->string('id_card_number')->nullable();
-            $table->string('id_card_type')->nullable();
+            $table->enum('id_card_type', ['passport', 'driver_license', 'national_id'])->nullable()->change();
         });
     }
 
@@ -23,9 +22,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('order_details', function (Blueprint $table) {
-            // 1. Drop the column
-            $table->dropColumn('id_card_number');
-            $table->dropColumn('id_card_type');
+            $table->string('id_card_type')->nullable()->change();
         });
     }
 };

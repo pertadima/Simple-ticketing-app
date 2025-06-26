@@ -68,11 +68,7 @@ class OrdersController extends Controller
             $order = Orders::create([
                 'user_id' => $user->user_id,
                 'total_amount' => $orderData['total'],
-                'status' => OrderStatus::PENDING,
-                'id_card_type' => $orderData['card_type'],
-                'id_card_number' => $orderData['card_number'],
-                'voucher_id' => $voucher?->voucher_id,
-                'discount_amount' => $orderData['discount'] ?? 0,
+                'status' => OrderStatus::PENDING
             ]);
     
             $order->orderDetails()->createMany($orderData['items']);
@@ -237,8 +233,8 @@ class OrdersController extends Controller
         return [
             'total' => $total,
             'items' => $items,
-            'card_type' => $item['card_type'] ?? null,
-            'card_number' => $item['card_number'] ?? null
+            'id_card_type' => $item['card_type'] ?? null,
+            'id_card_number' => $item['card_number'] ?? null
         ];
     }
 
@@ -280,7 +276,8 @@ class OrdersController extends Controller
             'ticket_id' => $ticket->ticket_id,
             'quantity' => $item['quantity'],
             'price' => $ticket->price,
-            'subtotal' => $subtotal
+            'id_card_type' => $item['card_type'] ?? null,
+            'id_card_number' => $item['card_number'] ?? null
         ];
     }
 
