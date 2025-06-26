@@ -15,6 +15,7 @@ use App\Helpers\ApiErrorHelper;
 use App\Models\VoucherRedemptions;
 use App\Models\Vouchers;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Log;
 
 class OrdersController extends Controller
 {
@@ -43,7 +44,6 @@ class OrdersController extends Controller
             $user = $request->user();
             $voucher = null;
             $errors = [];
-            $orderData = $this->validateAndProcessOrder($request->tickets, $user, $voucher);
     
             if ($request->filled('voucher_code')) {
                 $voucherValidation = $this->validateVoucher($request->voucher_code, $user, $request->tickets);
@@ -54,6 +54,8 @@ class OrdersController extends Controller
                     $voucher = $voucherValidation['voucher'];
                 }
             }
+
+            $orderData = $this->validateAndProcessOrder($request->tickets, $user, $voucher);
 
             if (isset($orderData['errors'])) {
                 $apiErrorHelper = new ApiErrorHelper();
@@ -77,7 +79,7 @@ class OrdersController extends Controller
             if ($voucher) {
                 $voucher->increment('used_count');
                 VoucherRedemptions::create([
-                    'voucher_id' => $voucher->voucher_id,
+                    'voucher_id' => $voucher->id,
                     'user_id' => $user->user_id,
                     'order_id' => $order->order_id
                 ]);
@@ -227,6 +229,7 @@ class OrdersController extends Controller
                 default => 0
             };
     
+            Log::info("Voucher applied: {$voucher->code}, discount: {$discount}");
             $total -= $discount;
         }
         
