@@ -12,6 +12,7 @@ Route::prefix('v1')->group(function () {
     Route::get('events/{event}', [EventsController::class, 'show']);
     
     Route::apiResource('categories', EventsCategoryController::class)->only(['index']);
+    Route::get('categories/{category}/events', [EventsCategoryController::class, 'eventsByCategory']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('users/{users}', [UsersController::class, 'show']);
