@@ -12,15 +12,29 @@ class EventsController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $events = Events::with(['tickets.category', 'tickets.type', 'categories'])
-            ->orderBy('date', 'asc')
-            ->paginate(10);
+        $query = Events::with(['tickets.category', 'tickets.type', 'categories']);
+        if ($search = $request->query('search')) {
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhereHas('categories', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+        }
+        
+        $events = $query->orderBy('date', 'asc')->paginate(10);
 
         return response()->json([
             'data' => [
                 'events' => EventsResource::collection($events)
+            ],
+            'meta' => [
+                'current_page' => $events->currentPage(),
+                'last_page' => $events->lastPage(),
+                'per_page' => $events->perPage(),
+                'total' => $events->total(),
+                'is_next_page' => $events->currentPage() < $events->lastPage(),
+                'is_prev_page' => $events->currentPage() > 1,
             ]
         ]);
     }

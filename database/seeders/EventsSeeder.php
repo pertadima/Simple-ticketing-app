@@ -17,7 +17,7 @@ class EventsSeeder extends Seeder
     public function run(): void
     {
         Events::factory()
-        ->count(10)
+        ->count(200)
         ->hasImages(3)
         ->create()
         ->each(function ($event) {
