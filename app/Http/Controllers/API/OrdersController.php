@@ -67,10 +67,11 @@ class OrdersController extends Controller
                 ), 422);
             }
             
+            Log::info("Order data processed successfully for user: {$user->user_id} and discount: {$orderData['discount']}");
             $order = Orders::create([
                 'user_id' => $user->user_id,
                 'total_amount' => $orderData['total'],
-                'discount_amount' => $orderData['discount'] ?? 0,
+                'discount_amount' => $orderData['discount'],
                 'status' => OrderStatus::PENDING
             ]);
     
@@ -224,6 +225,7 @@ class OrdersController extends Controller
         });
 
         if ($voucher) {
+            Log::info("Applying voucher: {$voucher->code} || type : {$voucher->discount_type} || discount: {$voucher->discount}");
             $discount = match ($voucher->discount_type) {
                 'percentage' => $total * ($voucher->discount / 100),
                 'fixed' => min($voucher->discount, $total),
@@ -269,6 +271,19 @@ class OrdersController extends Controller
             $errors[] = "Duplicate card number {$cardNumber} for ticket ID {$ticket->ticket_id}";
         }
         $idCards[$key] = true;
+
+        if (!empty($cardNumber)) {
+            $eventId = $ticket->event_id;
+            $alreadyUsed = DB::table('order_details')
+                ->join('tickets', 'order_details.ticket_id', '=', 'tickets.ticket_id')
+                ->where('tickets.event_id', $eventId)
+                ->where('order_details.id_card_number', $cardNumber)
+                ->exists();
+
+            if ($alreadyUsed) {
+                $errors[] = "ID card number {$cardNumber} has already been used for this event";
+            }
+        }
     }
 
     private function processItem($item, $ticket, &$items, &$total)
