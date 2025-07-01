@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\EventsResource;
 use Illuminate\Http\Request;
 use App\Models\Events;
+use App\Models\Seats;
+use App\Models\EventTicketType;
 
 class EventsController extends Controller
 {
@@ -89,15 +91,36 @@ class EventsController extends Controller
             return [
                 'category' => $category,
                 'tickets' => $items->map(function ($ticket) {
+                // Fetch has_seat_number from event_ticket_types table
+                $hasSeatNumber = EventTicketType::where('event_id', $ticket->event_id)
+                    ->where('type_id', $ticket->type_id)
+                    ->value('has_seat_number');
+
                     return [
                         'id' => $ticket->ticket_id,
                         'type' => $ticket->type->name,
                         'price' => $ticket->price,
                         'quota' => $ticket->quota,
-                        'requires_id_verification' => (bool)$ticket->requires_id_verification
+                        'requires_id_verification' => (bool)$ticket->requires_id_verification,
+                        'has_seat_number' => (bool)$hasSeatNumber
                     ];
                 })
             ];
         })->values();
+    }
+
+    public function showAvailableSeats($eventId, $typeId)
+    {
+        $seats = Seats::where('event_id', $eventId)
+            ->where('type_id', $typeId)
+            ->get(['seat_id', 'seat_number', 'is_booked'])
+            ->map(function ($seat) {
+                $seat->is_booked = (bool) $seat->is_booked;
+                return $seat;
+            });
+
+        return response()->json([
+            'data' => $seats
+        ]);
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\API\OrdersController;
 Route::prefix('v1')->group(function () {
     Route::apiResource('events', EventsController::class)->only(['index']);
     Route::get('events/{event}', [EventsController::class, 'show']);
+    Route::get('events/{event}/types/{type}/seats', [EventsController::class, 'showAvailableSeats']);
     
     Route::apiResource('categories', EventsCategoryController::class)->only(['index']);
     Route::get('categories/{category}/events', [EventsCategoryController::class, 'eventsByCategory']);

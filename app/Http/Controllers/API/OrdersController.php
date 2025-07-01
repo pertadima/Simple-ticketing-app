@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\DB;
 use App\Helpers\ApiErrorHelper;
 use App\Models\VoucherRedemptions;
 use App\Models\Vouchers;
+use App\Models\Seats;
+use App\Models\EventTicketType;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Log;
 
@@ -206,23 +208,69 @@ class OrdersController extends Controller
                     $this->validateIdRequirements($item, $ticket, $errors, $idCards);
                 });
             }
-        });
 
-        if (!empty($errors)) {
-            return ['errors' => $errors];
-        }
+             // Seat number validation
+            $hasSeatNumber = EventTicketType::where('event_id', $ticket->event_id)
+                ->where('type_id', $ticket->type_id)
+                ->value('has_seat_number');
+
+            if ($hasSeatNumber) {
+                foreach ($data['items'] as $item) {
+                    if (empty($item['seat_number'])) {
+                        $errors[] = "Seat number required for ticket ID {$ticket->ticket_id}";
+                    } else {
+                        // Check if seat is available
+                        $seat = Seats::where([
+                            'event_id' => $ticket->event_id,
+                            'type_id' => $ticket->type_id,
+                            'seat_number' => $item['seat_number'],
+                            'is_booked' => false
+                        ])->lockForUpdate()->first();
+
+                        if (!$seat) {
+                            $errors[] = "Seat {$item['seat_number']} is not available";
+                        }
+                    }
+                }
+            }
+        });
 
         // 4. Single processing loop with inventory update
         $ticketData->each(function ($data) use (&$items, &$total, $ticketsCollection) {
             $ticket = $ticketsCollection[$data['ticket_id']];
-            
-            collect($data['items'])->each(function ($item) use ($ticket, &$items, &$total) {
+            $hasSeatNumber = EventTicketType::where('event_id', $ticket->event_id)
+                ->where('type_id', $ticket->type_id)
+                ->value('has_seat_number');
+
+            collect($data['items'])->each(function ($item) use ($ticket, &$items, &$total, $hasSeatNumber) {
+                
+                if ($hasSeatNumber && !empty($item['seat_number'])) {
+                    $seat = Seats::where([
+                        'event_id' => $ticket->event_id,
+                        'type_id' => $ticket->type_id,
+                        'seat_number' => $item['seat_number'],
+                        'is_booked' => false
+                    ])->lockForUpdate()->first();
+
+                    if ($seat) {
+                        $seat->is_booked = true;
+                        $seat->save();
+                        $item['seat_id'] = $seat->seat_id; // Pass seat_id to order detail
+                    } else {
+                        $errors[] = "Seat {$item['seat_number']} is already booked";
+                    }
+                }
+
                 $this->processItem($item, $ticket, $items, $total);
             });
 
             $ticket->decrement('quota', $data['total_quantity']);
             $ticket->increment('sold_count', $data['total_quantity']);
         });
+
+        if (!empty($errors)) {
+            return ['errors' => $errors];
+        }
 
         if ($voucher) {
             Log::info("Applying voucher: {$voucher->code} || type : {$voucher->discount_type} || discount: {$voucher->discount}");
@@ -296,7 +344,8 @@ class OrdersController extends Controller
             'quantity' => $item['quantity'],
             'price' => $ticket->price,
             'id_card_type' => $item['card_type'] ?? null,
-            'id_card_number' => $item['card_number'] ?? null
+            'id_card_number' => $item['card_number'] ?? null,
+            'seat_id' => $item['seat_id'] ?? null
         ];
     }
 
