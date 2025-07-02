@@ -200,6 +200,7 @@ class OrdersController extends Controller
             // Quota validation
             if ($ticket->quota < $data['total_quantity']) {
                 $errors[] = "Ticket ID {$ticket->ticket_id} has only {$ticket->quota} available";
+                return;
             }
 
             // ID verification checks
@@ -207,6 +208,7 @@ class OrdersController extends Controller
                 collect($data['items'])->each(function ($item) use ($ticket, &$errors, &$idCards) {
                     $this->validateIdRequirements($item, $ticket, $errors, $idCards);
                 });
+                if (!empty($errors)) return;
             }
 
              // Seat number validation
@@ -217,7 +219,7 @@ class OrdersController extends Controller
             if ($hasSeatNumber) {
                 foreach ($data['items'] as $item) {
                     if (empty($item['seat_number'])) {
-                        $errors[] = "Seat number required for ticket ID {$ticket->ticket_id}";
+                        $errors[] = "Seat number required for {$ticket->event->name} type {$ticket->type->name}";
                     } else {
                         // Check if seat is available
                         $seat = Seats::where([
@@ -232,6 +234,7 @@ class OrdersController extends Controller
                         }
                     }
                 }
+                if (!empty($errors)) return;
             }
         });
 
