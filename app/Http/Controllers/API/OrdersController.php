@@ -37,7 +37,7 @@ class OrdersController extends Controller
     {
         $request->validate([
             'tickets' => 'required|array|min:1',
-            'tickets.*.ticket_id' => 'required|exists:tickets,ticket_id',
+            'tickets.*.ticket_id' => 'required|integer',
             'tickets.*.quantity' => 'required|integer|min:1',
             'voucher_code' => 'nullable|string|max:255'
         ]);
@@ -193,13 +193,13 @@ class OrdersController extends Controller
             
             // Ticket existence check
             if (!$ticket) {
-                $errors[] = "Ticket ID {$data['ticket_id']} does not exist";
+                $errors[] = "One or more selected tickets are invalid";
                 return;
             }
 
             // Quota validation
             if ($ticket->quota < $data['total_quantity']) {
-                $errors[] = "Ticket ID {$ticket->ticket_id} has only {$ticket->quota} available";
+                $errors[] = "{$ticket->category->name} - {$ticket->type->name} has only {$ticket->quota} available";
                 return;
             }
 
@@ -208,7 +208,9 @@ class OrdersController extends Controller
                 collect($data['items'])->each(function ($item) use ($ticket, &$errors, &$idCards) {
                     $this->validateIdRequirements($item, $ticket, $errors, $idCards);
                 });
-                if (!empty($errors)) return;
+                if (!empty($errors)) {
+                    return ['errors' => $errors];
+                }
             }
 
              // Seat number validation
@@ -234,9 +236,12 @@ class OrdersController extends Controller
                         }
                     }
                 }
-                if (!empty($errors)) return;
             }
         });
+
+        if (!empty($errors)) {
+            return ['errors' => $errors];
+        }
 
         // 4. Single processing loop with inventory update
         $ticketData->each(function ($data) use (&$items, &$total, $ticketsCollection) {
