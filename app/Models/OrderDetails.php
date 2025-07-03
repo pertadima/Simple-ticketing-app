@@ -9,7 +9,7 @@ class OrderDetails extends Model
     use HasFactory;
 
     protected $primaryKey = 'order_detail_id';
-    protected $fillable = ['order_id', 'ticket_id', 'quantity', 'price', 'id_card_number', 'id_card_type'];
+    protected $fillable = ['order_id', 'ticket_id', 'quantity', 'price', 'id_card_number', 'id_card_type', 'seat_id'];
 
     public function order()
     {

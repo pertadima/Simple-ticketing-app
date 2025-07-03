@@ -69,7 +69,6 @@ class OrdersController extends Controller
                 ), 422);
             }
             
-            Log::info("Order data processed successfully for user: {$user->user_id} and discount: {$orderData['discount']}");
             $order = Orders::create([
                 'user_id' => $user->user_id,
                 'total_amount' => $orderData['total'],
@@ -179,6 +178,17 @@ class OrdersController extends Controller
                 ];
             });
 
+        $allSeatIds = collect($tickets)
+            ->pluck('seat_id')
+            ->filter() // remove null/empty
+            ->toArray();
+
+        $duplicateSeatIds = array_unique(array_diff_assoc($allSeatIds, array_unique($allSeatIds)));
+
+        if (!empty($duplicateSeatIds)) {
+            return ['errors' => ['Duplicate seat_id(s) in request: ' . implode(', ', $duplicateSeatIds)]];
+        }
+
         // 2. Get tickets with lock and validate quotas
         $ticketsCollection = Tickets::with(['type', 'category'])
             ->whereIn('ticket_id', $ticketData->keys())
@@ -220,19 +230,20 @@ class OrdersController extends Controller
 
             if ($hasSeatNumber) {
                 foreach ($data['items'] as $item) {
-                    if (empty($item['seat_number'])) {
-                        $errors[] = "Seat number required for {$ticket->event->name} type {$ticket->type->name}";
+                    if (empty($item['seat_id'])) {
+                        $errors[] = "You need select seat number required for {$ticket->event->name} type {$ticket->type->name}";
                     } else {
                         // Check if seat is available
                         $seat = Seats::where([
                             'event_id' => $ticket->event_id,
                             'type_id' => $ticket->type_id,
-                            'seat_number' => $item['seat_number'],
-                            'is_booked' => false
+                            'seat_id' => $item['seat_id']
                         ])->lockForUpdate()->first();
 
                         if (!$seat) {
-                            $errors[] = "Seat {$item['seat_number']} is not available";
+                            $errors[] = "Invalid seat ID {$item['seat_id']} for ticket ID {$ticket->ticket_id}";
+                        } else if ($seat->is_booked) {
+                            $errors[] = "Seat number {$seat->seat_number} is not available";
                         }
                     }
                 }
@@ -252,20 +263,19 @@ class OrdersController extends Controller
 
             collect($data['items'])->each(function ($item) use ($ticket, &$items, &$total, $hasSeatNumber) {
                 
-                if ($hasSeatNumber && !empty($item['seat_number'])) {
+                if ($hasSeatNumber && !empty($item['seat_id'])) {
                     $seat = Seats::where([
                         'event_id' => $ticket->event_id,
                         'type_id' => $ticket->type_id,
-                        'seat_number' => $item['seat_number'],
-                        'is_booked' => false
+                        'seat_id' => $item['seat_id']
                     ])->lockForUpdate()->first();
 
-                    if ($seat) {
+                    if (!$seat->is_booked) {
+                        Log::debug("Check status seat {$seat->is_booked} inside if condition");
                         $seat->is_booked = true;
                         $seat->save();
-                        $item['seat_id'] = $seat->seat_id; // Pass seat_id to order detail
                     } else {
-                        $errors[] = "Seat {$item['seat_number']} is already booked";
+                        $errors[] = "Seat {$seat->seat_number} is already booked";
                     }
                 }
 
@@ -281,22 +291,20 @@ class OrdersController extends Controller
         }
 
         if ($voucher) {
-            Log::info("Applying voucher: {$voucher->code} || type : {$voucher->discount_type} || discount: {$voucher->discount}");
             $discount = match ($voucher->discount_type) {
                 'percentage' => $total * ($voucher->discount / 100),
                 'fixed' => min($voucher->discount, $total),
                 default => 0
             };
-    
-            Log::info("Voucher applied: {$voucher->code}, discount: {$discount}");
         }
-        
+
         return [
             'total' => $total,
             'items' => $items,
             'discount' => $discount,
             'id_card_type' => $item['card_type'] ?? null,
-            'id_card_number' => $item['card_number'] ?? null
+            'id_card_number' => $item['card_number'] ?? null,
+            'seat_id' => $item['seat_id'] ?? null
         ];
     }
 
