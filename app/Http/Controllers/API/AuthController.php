@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\UsersResource;
 use Illuminate\Support\Str;
 use App\Helpers\ApiErrorHelper;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ResetPasswordOtpMail;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -90,4 +95,60 @@ class AuthController extends Controller
             ]
         ], 201);
      }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate(['email' => 'required|email|exists:users,email']);
+
+        $otp = rand(100000, 999999);
+        DB::table('password_resets')->updateOrInsert(
+            ['email' => $request->email],
+            ['otp' => $otp, 'created_at' => now()]
+        );
+
+        Mail::to($request->email)->send(new ResetPasswordOtpMail($otp));
+
+        return response()->json([
+            'data' => [
+                'message' => 'OTP sent to your email'
+            ],
+        ]);
+    }
+
+    public function changePassword(Request $request)
+    {
+        $apiErrorHelper = new ApiErrorHelper();
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'otp' => 'required',
+            'password' => 'required|string|min:8'
+        ]);
+
+        $record = DB::table('password_resets')
+            ->where('email', $request->email)
+            ->where('otp', $request->otp)
+            ->where('created_at', '>=', Carbon::now()->subMinutes(10))
+            ->first();
+
+        if (!$record) {
+             return response()->json($apiErrorHelper->formatError(
+                title: 'Failed Validation',
+                status: 422,
+                detail: 'Invalid or expired OTP'
+            ), 422);
+        }
+
+        $user = Users::where('email', $request->email)->first();
+        $user->password_hash = Hash::make($request->password);
+        $user->save();
+
+        // Optionally, delete the reset record
+        DB::table('password_resets')->where('email', $request->email)->delete();
+
+       return response()->json([
+            'data' => [
+                'message' => 'Password changed successfully. Please log in with your new password.'
+            ],
+        ]);
+    }
 }
