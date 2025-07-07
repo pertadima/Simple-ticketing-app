@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ResetPasswordOtpMail;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -111,6 +110,35 @@ class AuthController extends Controller
         return response()->json([
             'data' => [
                 'message' => 'OTP sent to your email'
+            ],
+        ]);
+    }
+
+    public function validateOtp(Request $request)
+    {
+        $apiErrorHelper = new ApiErrorHelper();
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'otp' => 'required'
+        ]);
+
+        $record = DB::table('password_resets')
+            ->where('email', $request->email)
+            ->where('otp', $request->otp)
+            ->where('created_at', '>=', Carbon::now()->subMinutes(10))
+            ->first();
+
+        if (!$record) {
+            return response()->json($apiErrorHelper->formatError(
+                title: 'Failed Validation',
+                status: 422,
+                detail: 'Invalid or expired OTP'
+            ), 422);
+        }
+
+        return response()->json([
+            'data' => [
+                'message' => 'Otp is valid. Continue to change your password.',
             ],
         ]);
     }
