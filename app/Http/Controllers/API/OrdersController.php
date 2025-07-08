@@ -17,7 +17,6 @@ use App\Models\Vouchers;
 use App\Models\Seats;
 use App\Models\EventTicketType;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Log;
 
 class OrdersController extends Controller
 {
@@ -271,7 +270,6 @@ class OrdersController extends Controller
                     ])->lockForUpdate()->first();
 
                     if (!$seat->is_booked) {
-                        Log::debug("Check status seat {$seat->is_booked} inside if condition");
                         $seat->is_booked = true;
                         $seat->save();
                     } else {
