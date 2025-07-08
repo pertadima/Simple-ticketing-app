@@ -22,6 +22,7 @@ Route::prefix('v1')->group(function () {
 
         Route::post('orders/create', [OrdersController::class, 'store']);
         Route::patch('orders/{order}/pay', [OrdersController::class, 'markAsPaid'])->name('orders.pay');
+        Route::post('orders/create-stripe-payment-intent', [OrdersController::class, 'createStripePaymentIntent']);
     });
     
     Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:login');

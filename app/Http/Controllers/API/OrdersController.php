@@ -17,6 +17,8 @@ use App\Models\Vouchers;
 use App\Models\Seats;
 use App\Models\EventTicketType;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Stripe\Stripe;
+use Stripe\PaymentIntent;
 
 class OrdersController extends Controller
 {
@@ -384,5 +386,41 @@ class OrdersController extends Controller
 
             return new OrdersResource($order->fresh()->load('orderDetails.ticket'));
         });
+    }
+
+    public function createStripePaymentIntent(Request $request)
+    {
+        $apiErrorHelper = new ApiErrorHelper();
+        $request->validate([
+            'order_id' => 'required|exists:orders,order_id'
+        ]);
+
+        $order = Orders::findOrFail($request->order_id);
+
+        if ($order->status !== OrderStatus::PENDING) {
+            return response()->json($apiErrorHelper->formatError(
+                title: 'Invalid Order Status',
+                status: 422,
+                detail: 'Order is not pending or already paid',
+            ), 422);
+        }
+
+        Stripe::setApiKey(config('services.stripe.secret'));
+
+        $paymentIntent = PaymentIntent::create([
+            'amount' => intval($order->total_amount * 100), // Stripe uses cents
+            'currency' => 'usd', 
+            'metadata' => [
+                'order_id' => $order->order_id,
+                'user_id' => $order->user_id,
+            ],
+        ]);
+
+        return response()->json([
+            'data' => [
+                'clientSecret' => $paymentIntent->client_secret,
+                'publishableKey' => config('services.stripe.key'),
+            ]
+        ]);
     }
 }
