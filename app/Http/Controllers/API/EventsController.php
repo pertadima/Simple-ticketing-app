@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use App\Models\Events;
 use App\Models\Seats;
 use App\Models\EventTicketType;
+use Elastic\Elasticsearch\ClientBuilder;
+use Illuminate\Support\Facades\Log;
 
 class EventsController extends Controller
 {
@@ -16,29 +18,77 @@ class EventsController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Events::with(['tickets.category', 'tickets.type', 'categories']);
-        if ($search = $request->query('search')) {
-            $query->where('name', 'like', "%{$search}%")
-                ->orWhereHas('categories', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
-        }
-        
-        $events = $query->orderBy('date', 'asc')->paginate(10);
+        $search = $request->query('search');
+        $page = max(1, (int)$request->query('page', 1));
+        $perPage = 10;
 
-        return response()->json([
-            'data' => [
-                'events' => EventsResource::collection($events)
-            ],
-            'meta' => [
-                'current_page' => $events->currentPage(),
-                'last_page' => $events->lastPage(),
-                'per_page' => $events->perPage(),
-                'total' => $events->total(),
-                'is_next_page' => $events->currentPage() < $events->lastPage(),
-                'is_prev_page' => $events->currentPage() > 1,
-            ]
-        ]);
+        if ($search) {
+            $client = ClientBuilder::create()
+                ->setHosts(config('services.elasticsearch.hosts'))
+                ->build();
+
+            $params = [
+                'index' => 'events',
+                'body' => [
+                    'query' => [
+                        'multi_match' => [
+                            'query' => $search,
+                            'fields' => ['name^3', 'description', 'categories'],
+                            'fuzziness' => 'AUTO'
+                        ]
+                    ],
+                    'from' => ($page - 1) * $perPage,
+                    'size' => $perPage,
+                ]
+            ];
+
+            $results = $client->search($params);
+
+            $ids = collect($results['hits']['hits'])->pluck('_id')->all();
+            $events = Events::with(['tickets.category', 'tickets.type', 'categories'])
+                ->whereIn('event_id', $ids)
+                ->orderByRaw('FIELD(event_id, ' . implode(',', $ids) . ')')
+                ->get();
+
+            // Manual pagination meta
+            $total = $results['hits']['total']['value'] ?? 0;
+            $lastPage = ceil($total / $perPage);
+
+            Log::info('Search query provided, fetching filtered events.', ['search' => $search]);
+            return response()->json([
+                'data' => [
+                    'events' => EventsResource::collection($events)
+                ],
+                'meta' => [
+                    'current_page' => $page,
+                    'last_page' => $lastPage,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                    'is_next_page' => $page < $lastPage,
+                    'is_prev_page' => $page > 1,
+                ]
+            ]);
+        } else {
+            Log::info('No search query provided, fetching all events.');
+            // Fallback to DB if no search
+            $events = Events::with(['tickets.category', 'tickets.type', 'categories'])
+                ->orderBy('date', 'asc')
+                ->paginate($perPage);
+
+            return response()->json([
+                'data' => [
+                    'events' => EventsResource::collection($events)
+                ],
+                'meta' => [
+                    'current_page' => $events->currentPage(),
+                    'last_page' => $events->lastPage(),
+                    'per_page' => $events->perPage(),
+                    'total' => $events->total(),
+                    'is_next_page' => $events->currentPage() < $events->lastPage(),
+                    'is_prev_page' => $events->currentPage() > 1,
+                ]
+            ]);
+        }
     }
 
     /**

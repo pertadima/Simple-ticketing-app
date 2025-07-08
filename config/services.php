@@ -38,4 +38,7 @@ return [
         'secret' => env('STRIPE_SECRET_KEY'),
         'key' => env('STRIPE_PUBLIC_KEY'),
     ],
+    'elasticsearch' => [
+        'hosts' => [env('ELASTICSEARCH_HOST', 'localhost:9200')],
+    ],
 ];
