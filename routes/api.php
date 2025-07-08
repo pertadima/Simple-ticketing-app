@@ -15,7 +15,7 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('categories', EventsCategoryController::class)->only(['index']);
     Route::get('categories/{category}/events', [EventsCategoryController::class, 'eventsByCategory']);
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth:sanctum', 'token.expires')->group(function () {
         Route::get('users/{users}', [UsersController::class, 'show']);
         Route::get('users/{user}/orders', [UsersController::class, 'orders']);
         Route::post('users/{user}/logout', [AuthController::class, 'logout']);
