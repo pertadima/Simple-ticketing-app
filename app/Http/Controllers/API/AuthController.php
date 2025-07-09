@@ -31,14 +31,20 @@ class AuthController extends Controller
 
         $user = Users::where('email', $request->email)->firstOrFail();
 
-        $user->tokens()->delete();
         $token = $user->createToken('auth_token')->plainTextToken;
+        $refreshToken = Str::random(64);
+        $user->tokens()->delete();
+        $token = $user->createToken('auth_token');
+        $token->accessToken->refresh_token = $refreshToken;
+        $token->accessToken->refresh_token_expires_at = now()->addDays(7);
+        $token->accessToken->save();
 
         return response()->json([
             'data' => [
                 'user' => new UsersResource($user),
                 'message' => 'Login success',
-                'access_token' => 'Bearer ' . $token,
+                'access_token' => 'Bearer ' . $token->plainTextToken,
+                'refresh_token' => $refreshToken,
             ]
         ]);
     }
@@ -85,12 +91,18 @@ class AuthController extends Controller
             'remember_token' => Str::random(10)
         ]);
 
+        $refreshToken = Str::random(64);
         $user->tokens()->delete();
+        $token = $user->createToken('auth_token');
+        $token->accessToken->refresh_token = $refreshToken;
+        $token->accessToken->refresh_token_expires_at = now()->addDays(7);
+        $token->accessToken->save();
         return response()->json([
             'data' => [
                 'user' => new UsersResource($user),
                 'access_token' => 'Bearer ' . $user->createToken('auth_token')->plainTextToken,
-                'message' => 'Registration successful'
+                'message' => 'Registration successful',
+                'refresh_token' => $refreshToken
             ]
         ], 201);
      }
@@ -177,6 +189,51 @@ class AuthController extends Controller
             'data' => [
                 'message' => 'Password changed successfully. Please log in with your new password.'
             ],
+        ]);
+    }
+
+    public function refreshToken(Request $request)
+    {
+        $apiErrorHelper = new ApiErrorHelper();
+
+        $request->validate([
+            'refresh_token' => 'required|string',
+        ]);
+
+        $token = \Laravel\Sanctum\PersonalAccessToken::where('refresh_token', $request->refresh_token)
+            ->where('refresh_token_expires_at', '>', now())
+            ->first();
+
+        if (! $token) {
+            return response()->json($apiErrorHelper->formatError(
+                title: 'Invalid Token',
+                status: 401,
+                detail: 'Refresh token is invalid or expired'
+            ), 401);
+        }
+
+        $user = $token->tokenable;
+
+        // Invalidate old tokens
+        $user->tokens()->delete();
+
+        // Generate new tokens
+        $newToken = $user->createToken('auth_token');
+        $plainTextToken = $newToken->plainTextToken;
+        $newRefreshToken = Str::random(64);
+
+        // Save new refresh token
+        $newToken->accessToken->refresh_token = $newRefreshToken;
+        $newToken->accessToken->refresh_token_expires_at = now()->addDays(7);
+        $newToken->accessToken->save();
+
+        return response()->json([
+            'data' => [
+                'user' => new UsersResource($user),
+                'access_token' => 'Bearer ' . $plainTextToken,
+                'refresh_token' => $newRefreshToken,
+                'message' => 'Token refreshed successfully'
+            ]
         ]);
     }
 }

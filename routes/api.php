@@ -30,4 +30,5 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/reset-password', [AuthController::class, 'resetPassword']);
     Route::post('auth/validate-otp', [AuthController::class, 'validateOtp']);
     Route::post('auth/change-password', [AuthController::class, 'changePassword']);
+    Route::post('auth/refresh-token', [AuthController::class, 'refreshToken']);
 });
