@@ -196,11 +196,16 @@ class AuthController extends Controller
     {
         $apiErrorHelper = new ApiErrorHelper();
 
-        $request->validate([
-            'refresh_token' => 'required|string',
-        ]);
+        $refreshToken = $request->header('X-Refresh-Token');
+        if (!$refreshToken) {
+            return response()->json($apiErrorHelper->formatError(
+                title: 'Invalid Token',
+                status: 401,
+                detail: 'Refresh token is missing'
+            ), 401);
+        }
 
-        $token = \Laravel\Sanctum\PersonalAccessToken::where('refresh_token', $request->refresh_token)
+        $token = \Laravel\Sanctum\PersonalAccessToken::where('refresh_token', $refreshToken)
             ->where('refresh_token_expires_at', '>', now())
             ->first();
 
@@ -220,7 +225,7 @@ class AuthController extends Controller
         // Generate new tokens
         $newToken = $user->createToken('auth_token');
         $plainTextToken = $newToken->plainTextToken;
-        $newRefreshToken = Str::random(64);
+        $newRefreshToken = \Illuminate\Support\Str::random(64);
 
         // Save new refresh token
         $newToken->accessToken->refresh_token = $newRefreshToken;
@@ -229,7 +234,7 @@ class AuthController extends Controller
 
         return response()->json([
             'data' => [
-                'user' => new UsersResource($user),
+                'user' => new \App\Http\Resources\UsersResource($user),
                 'access_token' => 'Bearer ' . $plainTextToken,
                 'refresh_token' => $newRefreshToken,
                 'message' => 'Token refreshed successfully'
