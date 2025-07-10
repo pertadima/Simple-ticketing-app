@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ResetPasswordOtpMail;
 use Carbon\Carbon;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -205,7 +206,7 @@ class AuthController extends Controller
             ), 401);
         }
 
-        $token = \Laravel\Sanctum\PersonalAccessToken::where('refresh_token', $refreshToken)
+        $token = PersonalAccessToken::where('refresh_token', $refreshToken)
             ->where('refresh_token_expires_at', '>', now())
             ->first();
 
@@ -234,7 +235,7 @@ class AuthController extends Controller
 
         return response()->json([
             'data' => [
-                'user' => new \App\Http\Resources\UsersResource($user),
+                'user' => new UsersResource($user),
                 'access_token' => 'Bearer ' . $plainTextToken,
                 'refresh_token' => $newRefreshToken,
                 'message' => 'Token refreshed successfully'
