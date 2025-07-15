@@ -4,47 +4,48 @@ namespace App\Policies;
 
 use App\Models\Orders;
 use App\Models\Users;
+use App\Enums\OrderStatus;
 
 class OrdersPolicy
 {
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(Users $users): bool
+    public function viewAny(Users $user): bool
     {
-        return false;
+        return false; // Only admins can view all orders
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(Users $users, Orders $orders): bool
+    public function view(Users $user, Orders $order): bool
     {
-        return false;
+        return $user->user_id === $order->user_id;
     }
 
     /**
      * Determine whether the user can create models.
      */
-    public function create(Users $users): bool
+    public function create(Users $user): bool
     {
-        return false;
+        return $user->email_verified; // Only verified users can create orders
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(Users $users, Orders $orders): bool
+    public function update(Users $user, Orders $order): bool
     {
-        return $users->user_id === $orders->user_id;
+        return $user->user_id === $order->user_id;
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(Users $users, Orders $orders): bool
+    public function delete(Users $user, Orders $order): bool
     {
-        return false;
+        return false; // Maybe only admins can delete orders
     }
 
     /**
@@ -61,5 +62,12 @@ class OrdersPolicy
     public function forceDelete(Users $users, Orders $orders): bool
     {
         return false;
+    }
+
+    public function markAsPaid(Users $user, Orders $order): bool
+    {
+        
+        return $user->user_id === $order->user_id && 
+            $order->status === OrderStatus::PENDING;
     }
 }

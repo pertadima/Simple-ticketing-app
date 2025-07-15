@@ -367,16 +367,7 @@ class OrdersController extends Controller
 
     public function markAsPaid(Orders $order)
     {
-        $this->authorize('update', $order);
-
-        $apiErrorHelper = new ApiErrorHelper();
-        if ($order->status !== OrderStatus::PENDING) {
-            return response()->json($apiErrorHelper->formatError(
-                title: 'Invalid Order Status',
-                status: 422,
-                detail: 'Order cannot be paid in its current status',
-            ), 422);
-        }
+        $this->authorize('markAsPaid', $order);
 
         return DB::transaction(function () use ($order) {
             $order->update([

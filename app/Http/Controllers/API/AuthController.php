@@ -226,7 +226,7 @@ class AuthController extends Controller
         // Generate new tokens
         $newToken = $user->createToken('auth_token');
         $plainTextToken = $newToken->plainTextToken;
-        $newRefreshToken = \Illuminate\Support\Str::random(64);
+        $newRefreshToken = Str::random(64);
 
         // Save new refresh token
         $newToken->accessToken->refresh_token = $newRefreshToken;
