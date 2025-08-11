@@ -10,47 +10,59 @@ echo "================================================"
 mkdir -p coverage
 
 # Function to check if Xdebug is enabled
-check_xdebug() {
-    if php -m | grep -i xdebug > /dev/null; then
-        echo "✅ Xdebug is enabled"
+check_coverage_driver() {
+    # Try Homebrew PHP first (most likely to work)
+    if [ -x "/opt/homebrew/bin/php" ] && /opt/homebrew/bin/php -m | grep -i xdebug > /dev/null; then
+        echo "✅ Using Homebrew PHP with Xdebug"
+        PHP_BINARY="/opt/homebrew/bin/php"
+        XDEBUG_MODE="XDEBUG_MODE=coverage"
+        return 0
+    elif php -m | grep -i xdebug > /dev/null; then
+        echo "✅ Using current PHP with Xdebug"
+        PHP_BINARY="php"
+        XDEBUG_MODE="XDEBUG_MODE=coverage"
+        return 0
     elif php -m | grep -i pcov > /dev/null; then
-        echo "✅ PCOV is enabled"
+        echo "✅ Using current PHP with PCOV"
+        PHP_BINARY="php"
+        XDEBUG_MODE=""
+        return 0
     else
-        echo "⚠️  Neither Xdebug nor PCOV is enabled. Code coverage requires one of these extensions."
-        echo "   To install Xdebug on macOS:"
-        echo "   Method 1 (PECL): pecl install xdebug"
-        echo "   Method 2 (Homebrew): brew install xdebug"
-        echo "   Method 3 (PCOV - faster): pecl install pcov"
+        echo "⚠️  No coverage driver found. Available options:"
+        echo "   1. Install Xdebug: brew install xdebug"
+        echo "   2. Install PCOV: pecl install pcov"
+        echo "   3. Use Docker: ./test-with-docker.sh"
         echo ""
-        echo "   After installation, restart your terminal and try again."
+        echo "   Running tests without coverage..."
+        $PHP_BINARY vendor/bin/phpunit
         exit 1
     fi
 }
 
-# Check if Xdebug is available
-check_xdebug
+# Check for coverage driver
+check_coverage_driver
 
 echo ""
 echo "📊 Generating coverage reports..."
 
 # Run tests with HTML coverage report
 echo "Generating HTML coverage report..."
-./vendor/bin/phpunit --coverage-html coverage/html
+env $XDEBUG_MODE $PHP_BINARY vendor/bin/phpunit --coverage-html coverage/html
 
 # Run tests with text coverage report (console output)
 echo ""
 echo "Generating text coverage report..."
-./vendor/bin/phpunit --coverage-text
+env $XDEBUG_MODE $PHP_BINARY vendor/bin/phpunit --coverage-text
 
 # Run tests with Clover XML coverage report (useful for CI/CD)
 echo ""
 echo "Generating Clover XML coverage report..."
-./vendor/bin/phpunit --coverage-clover coverage/clover.xml
+env $XDEBUG_MODE $PHP_BINARY vendor/bin/phpunit --coverage-clover coverage/clover.xml
 
 # Run tests with PHP coverage report
 echo ""
 echo "Generating PHP coverage report..."
-./vendor/bin/phpunit --coverage-php coverage/coverage.php
+env $XDEBUG_MODE $PHP_BINARY vendor/bin/phpunit --coverage-php coverage/coverage.php
 
 echo ""
 echo "✅ Coverage reports generated successfully!"

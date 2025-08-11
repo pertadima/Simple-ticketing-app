@@ -191,7 +191,7 @@ class AuthControllerTest extends TestCase
     {
         $user = Users::factory()->create(['email' => 'test@example.com']);
 
-        $response = $this->postJson('/api/reset-password', [
+        $response = $this->postJson('/api/v1/auth/reset-password', [
             'email' => 'test@example.com'
         ]);
 
@@ -214,7 +214,7 @@ class AuthControllerTest extends TestCase
      */
     public function test_reset_password_with_invalid_email()
     {
-        $response = $this->postJson('/api/reset-password', [
+        $response = $this->postJson('/api/v1/auth/reset-password', [
             'email' => 'nonexistent@example.com'
         ]);
 
@@ -236,7 +236,7 @@ class AuthControllerTest extends TestCase
             'created_at' => now()
         ]);
 
-        $response = $this->postJson('/api/validate-otp', [
+        $response = $this->postJson('/api/v1/auth/validate-otp', [
             'email' => 'test@example.com',
             'otp' => $otp
         ]);
@@ -254,7 +254,7 @@ class AuthControllerTest extends TestCase
     {
         $user = Users::factory()->create(['email' => 'test@example.com']);
 
-        $response = $this->postJson('/api/validate-otp', [
+        $response = $this->postJson('/api/v1/auth/validate-otp', [
             'email' => 'test@example.com',
             'otp' => 999999
         ]);
@@ -280,7 +280,7 @@ class AuthControllerTest extends TestCase
             'created_at' => Carbon::now()->subMinutes(15) // Expired
         ]);
 
-        $response = $this->postJson('/api/validate-otp', [
+        $response = $this->postJson('/api/v1/auth/validate-otp', [
             'email' => 'test@example.com',
             'otp' => $otp
         ]);
@@ -306,7 +306,7 @@ class AuthControllerTest extends TestCase
             'created_at' => now()
         ]);
 
-        $response = $this->postJson('/api/change-password', [
+        $response = $this->postJson('/api/v1/auth/change-password', [
             'email' => 'test@example.com',
             'otp' => $otp,
             'password' => 'newpassword123'
@@ -334,7 +334,7 @@ class AuthControllerTest extends TestCase
     {
         $user = Users::factory()->create(['email' => 'test@example.com']);
 
-        $response = $this->postJson('/api/change-password', [
+        $response = $this->postJson('/api/v1/auth/change-password', [
             'email' => 'test@example.com',
             'otp' => 999999,
             'password' => 'newpassword123'
@@ -362,7 +362,7 @@ class AuthControllerTest extends TestCase
 
         $response = $this->withHeaders([
             'X-Refresh-Token' => $refreshToken,
-        ])->postJson('/api/refresh-token');
+        ])->postJson('/api/v1/auth/refresh-token');
 
         $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -383,7 +383,7 @@ class AuthControllerTest extends TestCase
      */
     public function test_refresh_token_with_missing_token()
     {
-        $response = $this->postJson('/api/refresh-token');
+        $response = $this->postJson('/api/v1/auth/refresh-token');
 
         $response->assertStatus(401)
                 ->assertJsonFragment([
@@ -398,7 +398,7 @@ class AuthControllerTest extends TestCase
     {
         $response = $this->withHeaders([
             'X-Refresh-Token' => 'invalid_refresh_token',
-        ])->postJson('/api/refresh-token');
+        ])->postJson('/api/v1/auth/refresh-token');
 
         $response->assertStatus(401)
                 ->assertJsonFragment([
@@ -422,7 +422,7 @@ class AuthControllerTest extends TestCase
 
         $response = $this->withHeaders([
             'X-Refresh-Token' => $refreshToken,
-        ])->postJson('/api/refresh-token');
+        ])->postJson('/api/v1/auth/refresh-token');
 
         $response->assertStatus(401)
                 ->assertJsonFragment([
