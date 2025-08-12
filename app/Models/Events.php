@@ -10,6 +10,10 @@ class Events extends Model
 
     protected $primaryKey = 'event_id';
     protected $fillable = ['name', 'date', 'location', 'description'];
+    
+    protected $casts = [
+        'date' => 'datetime',
+    ];
 
     public function tickets()
     {

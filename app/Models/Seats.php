@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Seats extends Model
 {
+    use HasFactory;
+    
     protected $primaryKey = 'seat_id';
     protected $fillable = [
         'event_id', 'type_id', 'seat_number', 'is_booked'

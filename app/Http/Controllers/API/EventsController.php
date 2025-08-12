@@ -23,51 +23,75 @@ class EventsController extends Controller
         $perPage = 10;
 
         if ($search) {
-            $client = ClientBuilder::create()
-                ->setHosts(config('services.elasticsearch.hosts'))
-                ->build();
+            try {
+                $client = ClientBuilder::create()
+                    ->setHosts(config('services.elasticsearch.hosts'))
+                    ->build();
 
-            $params = [
-                'index' => 'events',
-                'body' => [
-                    'query' => [
-                        'multi_match' => [
-                            'query' => $search,
-                            'fields' => ['name^3', 'description', 'categories'],
-                            'fuzziness' => 'AUTO'
-                        ]
+                $params = [
+                    'index' => 'events',
+                    'body' => [
+                        'query' => [
+                            'multi_match' => [
+                                'query' => $search,
+                                'fields' => ['name^3', 'description', 'categories'],
+                                'fuzziness' => 'AUTO'
+                            ]
+                        ],
+                        'from' => ($page - 1) * $perPage,
+                        'size' => $perPage,
+                    ]
+                ];
+
+                $results = $client->search($params);
+
+                $ids = collect($results['hits']['hits'])->pluck('_id')->all();
+                $events = Events::with(['tickets.category', 'tickets.type', 'categories'])
+                    ->whereIn('event_id', $ids)
+                    ->orderByRaw('FIELD(event_id, ' . implode(',', $ids) . ')')
+                    ->get();
+
+                // Manual pagination meta
+                $total = $results['hits']['total']['value'] ?? 0;
+                $lastPage = ceil($total / $perPage);
+
+                Log::info('Search query provided, fetching filtered events.', ['search' => $search]);
+                return response()->json([
+                    'data' => [
+                        'events' => EventsResource::collection($events)
                     ],
-                    'from' => ($page - 1) * $perPage,
-                    'size' => $perPage,
-                ]
-            ];
+                    'meta' => [
+                        'current_page' => $page,
+                        'last_page' => $lastPage,
+                        'per_page' => $perPage,
+                        'total' => $total,
+                        'is_next_page' => $page < $lastPage,
+                        'is_prev_page' => $page > 1,
+                    ]
+                ]);
+            } catch (\Exception $e) {
+                // If Elasticsearch is down, fall back to database search
+                Log::warning('Elasticsearch unavailable, falling back to database search', ['error' => $e->getMessage()]);
+                $events = Events::with(['tickets.category', 'tickets.type', 'categories'])
+                    ->where('name', 'like', '%' . $search . '%')
+                    ->orWhere('description', 'like', '%' . $search . '%')
+                    ->orderBy('date', 'asc')
+                    ->paginate($perPage);
 
-            $results = $client->search($params);
-
-            $ids = collect($results['hits']['hits'])->pluck('_id')->all();
-            $events = Events::with(['tickets.category', 'tickets.type', 'categories'])
-                ->whereIn('event_id', $ids)
-                ->orderByRaw('FIELD(event_id, ' . implode(',', $ids) . ')')
-                ->get();
-
-            // Manual pagination meta
-            $total = $results['hits']['total']['value'] ?? 0;
-            $lastPage = ceil($total / $perPage);
-
-            Log::info('Search query provided, fetching filtered events.', ['search' => $search]);
-            return response()->json([
-                'data' => [
-                    'events' => EventsResource::collection($events)
-                ],
-                'meta' => [
-                    'current_page' => $page,
-                    'last_page' => $lastPage,
-                    'per_page' => $perPage,
-                    'total' => $total,
-                    'is_next_page' => $page < $lastPage,
-                    'is_prev_page' => $page > 1,
-                ]
-            ]);
+                return response()->json([
+                    'data' => [
+                        'events' => EventsResource::collection($events)
+                    ],
+                    'meta' => [
+                        'current_page' => $events->currentPage(),
+                        'last_page' => $events->lastPage(),
+                        'per_page' => $events->perPage(),
+                        'total' => $events->total(),
+                        'is_next_page' => $events->currentPage() < $events->lastPage(),
+                        'is_prev_page' => $events->currentPage() > 1,
+                    ]
+                ]);
+            }
         } else {
             Log::info('No search query provided, fetching all events.');
             // Fallback to DB if no search
