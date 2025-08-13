@@ -182,19 +182,21 @@ class EventsControllerTest extends TestCase
         $response->assertStatus(200)
             ->assertJsonStructure([
                 'data' => [
-                    'event_id',
-                    'name',
-                    'description',
-                    'location',
-                    'date',
-                    'time',
-                    'grouped_tickets',
+                    'event' => [
+                        'id',
+                        'name',
+                        'description',
+                        'location',
+                        'date'
+                    ]
                 ]
             ])
             ->assertJson([
                 'data' => [
-                    'event_id' => $event->event_id,
-                    'name' => $event->name,
+                    'event' => [
+                        'id' => $event->event_id,
+                        'name' => $event->name,
+                    ]
                 ]
             ]);
     }

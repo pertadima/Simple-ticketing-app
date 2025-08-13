@@ -245,7 +245,7 @@ class EventsCategoryControllerUnitTest extends TestCase
         // Check that the resource transformation is correct
         $this->assertEquals($event->event_id, $eventData['id']);
         $this->assertEquals('Test Event', $eventData['name']);
-        $this->assertEquals('2025-08-15 00:00:00', $eventData['date']); // Updated to match actual datetime format
+        $this->assertEquals('2025-08-15T00:00:00.000000Z', $eventData['date']); // Updated to match actual datetime format
         $this->assertEquals('Test Location', $eventData['location']);
         $this->assertEquals('Test Description', $eventData['description']);
         
