@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             TicketCategoriesSeeder::class,
             TicketTypesSeeder::class,
             EventsSeeder::class,
+            VouchersSeeder::class,
             UsersSeeder::class
         ]);
     }
