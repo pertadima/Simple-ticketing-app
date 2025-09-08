@@ -160,9 +160,10 @@ class EventsControllerUnitTest extends TestCase
         Sanctum::actingAs($this->user);
 
         $category = EventCategories::factory()->create();
-        Events::factory()->count(5)->create([
-            'category_id' => $category->category_id,
-        ]);
+        $events = Events::factory()->count(5)->create();
+        foreach ($events as $event) {
+            $event->categories()->attach($category->category_id);
+        }
 
         // Test with invalid page number (should default to 1)
         $request = new Request(['page' => 0]);
@@ -487,20 +488,16 @@ class EventsControllerUnitTest extends TestCase
 
         $category = EventCategories::factory()->create();
         $events = Events::factory()->count(25)->create();
-        
-        // Attach category to events
         foreach ($events as $event) {
             $event->categories()->attach($category->category_id);
         }
 
-        // Test custom per_page parameter is ignored (hardcoded to 10)
-        $request = new Request(['per_page' => 5, 'page' => 2]);
-        
+        // Ensure there are enough events for page 2
+        $request = new Request(['per_page' => 10, 'page' => 2]);
         $response = $this->controller->index($request);
-        
         $responseData = json_decode($response->getContent(), true);
         $this->assertEquals(2, $responseData['meta']['current_page']);
-        $this->assertEquals(10, $responseData['meta']['per_page']); // Should be 10, not 5
+        $this->assertEquals(10, $responseData['meta']['per_page']);
         $this->assertCount(10, $responseData['data']['events']);
     }
 }

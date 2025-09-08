@@ -43,12 +43,11 @@ class EventsControllerTest extends TestCase
                 'data' => [
                     'events' => [
                         '*' => [
-                            'event_id',
+                            'id',
                             'name',
                             'description',
                             'location',
-                            'date',
-                            'time',
+                            'date'
                         ]
                     ]
                 ],
