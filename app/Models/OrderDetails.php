@@ -20,4 +20,9 @@ class OrderDetails extends Model
     {
         return $this->belongsTo(Tickets::class, 'ticket_id');
     }
+
+    public function seat()
+    {
+        return $this->belongsTo(Seats::class, 'seat_id');
+    }
 }
