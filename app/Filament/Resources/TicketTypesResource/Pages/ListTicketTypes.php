@@ -3,9 +3,8 @@
 namespace App\Filament\Resources\TicketTypesResource\Pages;
 
 use App\Filament\Resources\TicketTypesResource;
-use Filament\Actions;
-use Filament\Resources\Pages\ListRecords;
 use Filament\Actions\CreateAction;
+use Filament\Resources\Pages\ListRecords;
 
 class ListTicketTypes extends ListRecords
 {

@@ -5,7 +5,6 @@ namespace App\Filament\Widgets;
 use App\Models\Users;
 use App\Models\Events;
 use App\Models\Orders;
-use App\Models\Tickets;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 

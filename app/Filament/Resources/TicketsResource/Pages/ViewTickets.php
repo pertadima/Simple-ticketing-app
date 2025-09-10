@@ -3,9 +3,8 @@
 namespace App\Filament\Resources\TicketsResource\Pages;
 
 use App\Filament\Resources\TicketsResource;
-use Filament\Actions;
-use Filament\Resources\Pages\ViewRecord;
 use Filament\Actions\EditAction;
+use Filament\Resources\Pages\ViewRecord;
 
 class ViewTickets extends ViewRecord
 {

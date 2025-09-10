@@ -2,12 +2,8 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\TicketTypesResource\Pages;
 use App\Models\TicketTypes;
-use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
@@ -16,6 +12,10 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
+use App\Filament\Resources\TicketTypesResource\Pages;
+use Filament\Resources\Resource;
+use Filament\Forms;
+use Filament\Tables;
 
 class TicketTypesResource extends Resource
 {

@@ -2,14 +2,10 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\OrdersResource\Pages;
 use App\Models\Orders;
 use App\Enums\OrderStatus;
 use App\Enums\IdCardType;
-use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Actions\BulkActionGroup;
@@ -25,6 +21,10 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
+use App\Filament\Resources\OrdersResource\Pages;
+use Filament\Resources\Resource;
+use Filament\Forms;
+use Filament\Tables;
 
 class OrdersResource extends Resource
 {
@@ -92,10 +92,10 @@ class OrdersResource extends Resource
                     ->label('Customer'),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'paid' => 'success',
-                        'cancelled' => 'danger',
+                    ->color(fn (OrderStatus $state): string => match ($state) {
+                        OrderStatus::PENDING => 'warning',
+                        OrderStatus::PAID => 'success',
+                        OrderStatus::CANCELLED => 'danger',
                         default => 'gray',
                     }),
                 TextColumn::make('total_amount')

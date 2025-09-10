@@ -3,9 +3,8 @@
 namespace App\Filament\Resources\UsersResource\Pages;
 
 use App\Filament\Resources\UsersResource;
-use Filament\Actions;
-use Filament\Resources\Pages\ViewRecord;
 use Filament\Actions\EditAction;
+use Filament\Resources\Pages\ViewRecord;
 
 class ViewUsers extends ViewRecord
 {

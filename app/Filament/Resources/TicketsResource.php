@@ -2,12 +2,8 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\TicketsResource\Pages;
 use App\Models\Tickets;
-use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Actions\DeleteAction;
@@ -23,6 +19,10 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Toggle;
+use App\Filament\Resources\TicketsResource\Pages;
+use Filament\Resources\Resource;
+use Filament\Forms;
+use Filament\Tables;
 
 class TicketsResource extends Resource
 {

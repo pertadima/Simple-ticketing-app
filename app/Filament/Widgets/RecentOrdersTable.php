@@ -2,8 +2,8 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\OrderStatus;
 use App\Models\Orders;
-use Filament\Tables;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -30,10 +30,10 @@ class RecentOrdersTable extends BaseWidget
                     ->searchable(),
                 TextColumn::make('status')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'paid' => 'success',
-                        'cancelled' => 'danger',
+                    ->color(fn (OrderStatus $state): string => match ($state) {
+                        OrderStatus::PENDING => 'warning',
+                        OrderStatus::PAID => 'success',
+                        OrderStatus::CANCELLED => 'danger',
                         default => 'gray',
                     }),
                 TextColumn::make('total_amount')

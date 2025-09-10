@@ -3,8 +3,8 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Orders;
-use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
+use Filament\Widgets\ChartWidget;
 
 class OrdersChart extends ChartWidget
 {

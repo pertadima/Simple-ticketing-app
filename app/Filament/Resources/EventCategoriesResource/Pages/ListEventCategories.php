@@ -3,9 +3,8 @@
 namespace App\Filament\Resources\EventCategoriesResource\Pages;
 
 use App\Filament\Resources\EventCategoriesResource;
-use Filament\Actions;
-use Filament\Resources\Pages\ListRecords;
 use Filament\Actions\CreateAction;
+use Filament\Resources\Pages\ListRecords;
 
 class ListEventCategories extends ListRecords
 {
