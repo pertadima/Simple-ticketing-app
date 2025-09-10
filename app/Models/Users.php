@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Support\Facades\Hash;
 
 class Users extends Authenticatable
 {
@@ -15,18 +16,54 @@ class Users extends Authenticatable
     protected $fillable = [
         'email', 
         'password_hash', 
-        'full_name'
+        'full_name',
+        'name',
+        'password'
     ];
 
     protected $hidden = [
         'password_hash',
+        'password',
         'remember_token',
+    ];
+
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password_hash' => 'hashed',
     ];
 
     // Tell Laravel which field to use for authentication
     public function getAuthPassword()
     {
         return $this->password_hash;
+    }
+
+    // Override the password field name for authentication
+    public function getAuthPasswordName()
+    {
+        return 'password_hash';
+    }
+
+    // Map password attribute to password_hash
+    public function getPasswordAttribute()
+    {
+        return $this->password_hash;
+    }
+
+    public function setPasswordAttribute($value)
+    {
+        $this->attributes['password_hash'] = Hash::make($value);
+    }
+
+    // Map name attribute to full_name
+    public function getNameAttribute()
+    {
+        return $this->full_name;
+    }
+
+    public function setNameAttribute($value)
+    {
+        $this->attributes['full_name'] = $value;
     }
 
     // Relationships

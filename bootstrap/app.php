@@ -22,8 +22,26 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->renderable(function (AuthenticationException $e, $request) {
+            // Handle Filament admin authentication
+            if ($request->is('admin') || $request->is('admin/*')) {
+                return redirect()->guest('/admin/login');
+            }
+            
+            if ($request->json() && !$request->is('admin*')) {
+                $apiErrorHelper = new ApiErrorHelper();
+                return response()->json($apiErrorHelper->formatError(
+                    title: 'Unauthenticated',
+                    status: 401,
+                    detail: 'Authentication credentials are missing or invalid'
+                ), 401);
+            }
+            
+            return redirect()->guest(route('login', [], false) ?? '/login');
+        });
+        
         $exceptions->renderable(function (NotFoundHttpException $e, $request) {
-            if ($request->json()) {
+            if ($request->json() && !$request->is('admin*')) {
                 $apiErrorHelper = new ApiErrorHelper();
                 return response()->json($apiErrorHelper->formatError(
                     title: 'Resource Not Found',
@@ -35,21 +53,10 @@ return Application::configure(basePath: dirname(__DIR__))
             throw $e;
         });
 
-        $exceptions->renderable(function (AuthenticationException $e, $request) {
-            if ($request->json()) {
-                $apiErrorHelper = new ApiErrorHelper();
-                return response()->json($apiErrorHelper->formatError(
-                    title: 'Unauthenticated',
-                    status: 401,
-                    detail: 'Authentication credentials are missing or invalid'
-                ), 401);
-            }
 
-            throw $e;
-        });
 
         $exceptions->renderable(function (MethodNotAllowedHttpException $e, $request) {
-            if ($request->json()) {
+            if ($request->json() && !$request->is('admin*')) {
                 $apiErrorHelper = new ApiErrorHelper();
                 return response()->json($apiErrorHelper->formatError(
                     title: 'Method not allowed',
@@ -66,7 +73,7 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->renderable(function (AccessDeniedHttpException $e, $request) {
-            if ($request->json()) {
+            if ($request->json() && !$request->is('admin*')) {
                 $apiErrorHelper = new ApiErrorHelper();
                 return response()->json($apiErrorHelper->formatError(
                     title: 'Access Denied',
