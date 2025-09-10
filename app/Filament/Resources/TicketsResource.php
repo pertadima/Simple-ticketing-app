@@ -10,6 +10,19 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 
 class TicketsResource extends Resource
 {
@@ -25,19 +38,19 @@ class TicketsResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Ticket Details')
+                Section::make('Ticket Details')
                     ->schema([
-                        Forms\Components\Select::make('event_id')
+                        Select::make('event_id')
                             ->relationship('event', 'name')
                             ->searchable()
                             ->preload()
                             ->required(),
-                        Forms\Components\Select::make('category_id')
+                        Select::make('category_id')
                             ->relationship('category', 'name')
                             ->searchable()
                             ->preload()
                             ->required(),
-                        Forms\Components\Select::make('type_id')
+                        Select::make('type_id')
                             ->relationship('type', 'name')
                             ->searchable()
                             ->preload()
@@ -45,22 +58,22 @@ class TicketsResource extends Resource
                     ])
                     ->columns(3),
                 
-                Forms\Components\Section::make('Pricing & Availability')
+                Section::make('Pricing & Availability')
                     ->schema([
-                        Forms\Components\TextInput::make('price')
+                        TextInput::make('price')
                             ->numeric()
                             ->prefix('$')
                             ->required()
                             ->step(0.01),
-                        Forms\Components\TextInput::make('quota')
+                        TextInput::make('quota')
                             ->numeric()
                             ->required()
                             ->minValue(1),
-                        Forms\Components\TextInput::make('sold_count')
+                        TextInput::make('sold_count')
                             ->numeric()
                             ->default(0)
                             ->minValue(0),
-                        Forms\Components\Toggle::make('requires_id_verification')
+                        Toggle::make('requires_id_verification')
                             ->label('Requires ID Verification')
                             ->default(false),
                     ])
@@ -72,25 +85,25 @@ class TicketsResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('ticket_id')
+                TextColumn::make('ticket_id')
                     ->label('ID')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('event.name')
+                TextColumn::make('event.name')
                     ->searchable()
                     ->sortable()
                     ->limit(30)
                     ->weight('medium'),
-                Tables\Columns\TextColumn::make('category.name')
+                TextColumn::make('category.name')
                     ->badge()
                     ->color('info'),
-                Tables\Columns\TextColumn::make('type.name')
+                TextColumn::make('type.name')
                     ->badge()
                     ->color('success'),
-                Tables\Columns\TextColumn::make('price')
+                TextColumn::make('price')
                     ->money('USD')
                     ->sortable()
                     ->weight('bold'),
-                Tables\Columns\TextColumn::make('availability')
+                TextColumn::make('availability')
                     ->getStateUsing(fn ($record) => ($record->quota - $record->sold_count) . ' / ' . $record->quota)
                     ->label('Available / Total')
                     ->badge()
@@ -102,41 +115,41 @@ class TicketsResource extends Resource
                         if ($percentage > 0.2) return 'warning';
                         return 'danger';
                     }),
-                Tables\Columns\IconColumn::make('requires_id_verification')
+                IconColumn::make('requires_id_verification')
                     ->boolean()
                     ->label('ID Required'),
-                Tables\Columns\TextColumn::make('orderDetails_count')
+                TextColumn::make('orderDetails_count')
                     ->counts('orderDetails')
                     ->label('Orders')
                     ->badge()
                     ->color('primary'),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('event')
+                SelectFilter::make('event')
                     ->relationship('event', 'name')
                     ->searchable()
                     ->preload(),
-                Tables\Filters\SelectFilter::make('category')
+                SelectFilter::make('category')
                     ->relationship('category', 'name')
                     ->multiple(),
-                Tables\Filters\Filter::make('available')
+                Filter::make('available')
                     ->query(fn (Builder $query): Builder => $query->whereRaw('quota > sold_count'))
                     ->label('Available Tickets'),
-                Tables\Filters\Filter::make('sold_out')
+                Filter::make('sold_out')
                     ->query(fn (Builder $query): Builder => $query->whereRaw('quota <= sold_count'))
                     ->label('Sold Out'),
-                Tables\Filters\Filter::make('id_required')
+                Filter::make('id_required')
                     ->query(fn (Builder $query): Builder => $query->where('requires_id_verification', true))
                     ->label('ID Verification Required'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')

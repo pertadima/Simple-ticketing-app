@@ -5,6 +5,7 @@ namespace App\Filament\Resources\TicketTypesResource\Pages;
 use App\Filament\Resources\TicketTypesResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Actions\CreateAction;
 
 class ListTicketTypes extends ListRecords
 {
@@ -13,7 +14,7 @@ class ListTicketTypes extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

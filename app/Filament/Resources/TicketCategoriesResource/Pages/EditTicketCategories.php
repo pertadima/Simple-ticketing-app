@@ -5,6 +5,7 @@ namespace App\Filament\Resources\TicketCategoriesResource\Pages;
 use App\Filament\Resources\TicketCategoriesResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Actions\DeleteAction;
 
 class EditTicketCategories extends EditRecord
 {
@@ -13,7 +14,7 @@ class EditTicketCategories extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

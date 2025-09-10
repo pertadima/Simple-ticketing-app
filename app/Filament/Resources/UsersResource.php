@@ -11,6 +11,15 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\TextInput;
 
 class UsersResource extends Resource
 {
@@ -26,17 +35,17 @@ class UsersResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('User Information')
+                Section::make('User Information')
                     ->schema([
-                        Forms\Components\TextInput::make('full_name')
+                        TextInput::make('full_name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('email')
+                        TextInput::make('email')
                             ->email()
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('password_hash')
+                        TextInput::make('password_hash')
                             ->password()
                             ->required(fn (string $context): bool => $context === 'create')
                             ->dehydrated(fn ($state) => filled($state))
@@ -51,44 +60,44 @@ class UsersResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('user_id')
+                TextColumn::make('user_id')
                     ->label('ID')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('full_name')
+                TextColumn::make('full_name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('email')
+                TextColumn::make('email')
                     ->searchable()
                     ->sortable()
                     ->copyable(),
-                Tables\Columns\TextColumn::make('orders_count')
+                TextColumn::make('orders_count')
                     ->counts('orders')
                     ->label('Total Orders')
                     ->sortable()
                     ->badge()
                     ->color('success'),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime('M j, Y')
                     ->sortable()
                     ->label('Joined'),
             ])
             ->filters([
-                Tables\Filters\Filter::make('has_orders')
+                Filter::make('has_orders')
                     ->query(fn (Builder $query): Builder => $query->has('orders'))
                     ->label('With Orders'),
-                Tables\Filters\Filter::make('recent')
+                Filter::make('recent')
                     ->query(fn (Builder $query): Builder => $query->where('created_at', '>=', now()->subMonth()))
                     ->label('Recent (30 days)'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')

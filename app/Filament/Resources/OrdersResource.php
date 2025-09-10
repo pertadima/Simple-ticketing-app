@@ -12,6 +12,19 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
 
 class OrdersResource extends Resource
 {
@@ -27,37 +40,37 @@ class OrdersResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Order Information')
+                Section::make('Order Information')
                     ->schema([
-                        Forms\Components\Select::make('user_id')
+                        Select::make('user_id')
                             ->relationship('user', 'full_name')
                             ->searchable()
                             ->preload()
                             ->required(),
-                        Forms\Components\TextInput::make('total_amount')
+                        TextInput::make('total_amount')
                             ->numeric()
                             ->prefix('$')
                             ->required(),
-                        Forms\Components\TextInput::make('discount_amount')
+                        TextInput::make('discount_amount')
                             ->numeric()
                             ->prefix('$')
                             ->default(0),
-                        Forms\Components\Select::make('status')
+                        Select::make('status')
                             ->options(OrderStatus::class)
                             ->required()
                             ->default(OrderStatus::PENDING),
                     ])
                     ->columns(2),
                 
-                Forms\Components\Section::make('Customer Details')
+                Section::make('Customer Details')
                     ->schema([
-                        Forms\Components\Select::make('id_card_type')
+                        Select::make('id_card_type')
                             ->options(IdCardType::class)
                             ->required(),
-                        Forms\Components\TextInput::make('id_card_number')
+                        TextInput::make('id_card_number')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Toggle::make('email_verified')
+                        Toggle::make('email_verified')
                             ->default(false),
                     ])
                     ->columns(2),
@@ -68,16 +81,16 @@ class OrdersResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('order_id')
+                TextColumn::make('order_id')
                     ->label('Order ID')
                     ->searchable()
                     ->sortable()
                     ->weight('bold'),
-                Tables\Columns\TextColumn::make('user.full_name')
+                TextColumn::make('user.full_name')
                     ->searchable()
                     ->sortable()
                     ->label('Customer'),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
@@ -85,49 +98,49 @@ class OrdersResource extends Resource
                         'cancelled' => 'danger',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('total_amount')
+                TextColumn::make('total_amount')
                     ->money('USD')
                     ->sortable()
                     ->weight('medium'),
-                Tables\Columns\TextColumn::make('discount_amount')
+                TextColumn::make('discount_amount')
                     ->money('USD')
                     ->sortable()
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('orderDetails_count')
+                TextColumn::make('orderDetails_count')
                     ->counts('orderDetails')
                     ->label('Items')
                     ->badge()
                     ->color('info'),
-                Tables\Columns\IconColumn::make('email_verified')
+                IconColumn::make('email_verified')
                     ->boolean()
                     ->label('Verified'),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime('M j, Y g:i A')
                     ->sortable()
                     ->label('Order Date'),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(OrderStatus::class)
                     ->multiple(),
-                Tables\Filters\Filter::make('verified_only')
+                Filter::make('verified_only')
                     ->query(fn (Builder $query): Builder => $query->where('email_verified', true))
                     ->label('Email Verified'),
-                Tables\Filters\Filter::make('high_value')
+                Filter::make('high_value')
                     ->query(fn (Builder $query): Builder => $query->where('total_amount', '>=', 100))
                     ->label('High Value (≥$100)'),
-                Tables\Filters\Filter::make('recent')
+                Filter::make('recent')
                     ->query(fn (Builder $query): Builder => $query->where('created_at', '>=', now()->subWeek()))
                     ->label('Recent (7 days)'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')

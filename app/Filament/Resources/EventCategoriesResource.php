@@ -5,9 +5,17 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\EventCategoriesResource\Pages;
 use App\Models\EventCategories;
 use Filament\Forms;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
 class EventCategoriesResource extends Resource
@@ -26,12 +34,12 @@ class EventCategoriesResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Category Information')
+                Section::make('Category Information')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Textarea::make('description')
+                        Textarea::make('description')
                             ->rows(3)
                             ->columnSpanFull(),
                     ])
@@ -42,25 +50,25 @@ class EventCategoriesResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('category_id')
+                TextColumn::make('category_id')
                     ->label('ID')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable()
                     ->weight('medium'),
-                Tables\Columns\TextColumn::make('description')
+                TextColumn::make('description')
                     ->limit(50)
                     ->tooltip(function (EventCategories $record): ?string {
                         return $record->description;
                     }),
-                Tables\Columns\TextColumn::make('events_count')
+                TextColumn::make('events_count')
                     ->counts('events')
                     ->label('Events')
                     ->sortable()
                     ->badge()
                     ->color('success'),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime('M j, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -69,12 +77,12 @@ class EventCategoriesResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->striped()

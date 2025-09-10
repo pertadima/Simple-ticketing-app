@@ -4,6 +4,8 @@ namespace App\Filament\Widgets;
 
 use App\Models\Orders;
 use Filament\Tables;
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
@@ -20,13 +22,13 @@ class RecentOrdersTable extends BaseWidget
         return $table
             ->query(Orders::query()->latest()->limit(5))
             ->columns([
-                Tables\Columns\TextColumn::make('order_id')
+                TextColumn::make('order_id')
                     ->label('Order ID')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('user.full_name')
+                TextColumn::make('user.full_name')
                     ->label('Customer')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('status')
+                TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
@@ -34,15 +36,15 @@ class RecentOrdersTable extends BaseWidget
                         'cancelled' => 'danger',
                         default => 'gray',
                     }),
-                Tables\Columns\TextColumn::make('total_amount')
+                TextColumn::make('total_amount')
                     ->money('USD')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime('M j, Y g:i A')
                     ->sortable(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
+                ViewAction::make()
                     ->url(fn (Orders $record): string => route('filament.admin.resources.orders.view', $record)),
             ])
             ->paginated(false);

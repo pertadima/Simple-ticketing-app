@@ -5,6 +5,7 @@ namespace App\Filament\Resources\OrdersResource\Pages;
 use App\Filament\Resources\OrdersResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Actions\EditAction;
 
 class ViewOrders extends ViewRecord
 {
@@ -13,7 +14,7 @@ class ViewOrders extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\EditAction::make(),
+            EditAction::make(),
         ];
     }
 }

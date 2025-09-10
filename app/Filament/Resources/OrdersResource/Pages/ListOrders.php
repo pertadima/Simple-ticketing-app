@@ -5,6 +5,7 @@ namespace App\Filament\Resources\OrdersResource\Pages;
 use App\Filament\Resources\OrdersResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Actions\CreateAction;
 
 class ListOrders extends ListRecords
 {
@@ -13,7 +14,7 @@ class ListOrders extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            CreateAction::make(),
         ];
     }
 }

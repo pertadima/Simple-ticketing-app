@@ -5,6 +5,7 @@ namespace App\Filament\Resources\EventCategoriesResource\Pages;
 use App\Filament\Resources\EventCategoriesResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Actions\DeleteAction;
 
 class EditEventCategories extends EditRecord
 {
@@ -13,7 +14,7 @@ class EditEventCategories extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            DeleteAction::make(),
         ];
     }
 }

@@ -11,6 +11,19 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\DateTimePicker;
 
 class EventsResource extends Resource
 {
@@ -26,35 +39,35 @@ class EventsResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Event Details')
+                Section::make('Event Details')
                     ->schema([
-                        Forms\Components\TextInput::make('name')
+                        TextInput::make('name')
                             ->required()
                             ->maxLength(255)
                             ->columnSpanFull(),
-                        Forms\Components\DateTimePicker::make('date')
+                        DateTimePicker::make('date')
                             ->required()
                             ->native(false),
-                        Forms\Components\TextInput::make('location')
+                        TextInput::make('location')
                             ->required()
                             ->maxLength(255),
-                        Forms\Components\Textarea::make('description')
+                        Textarea::make('description')
                             ->rows(3)
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
                 
-                Forms\Components\Section::make('Categories')
+                Section::make('Categories')
                     ->schema([
-                        Forms\Components\Select::make('categories')
+                        Select::make('categories')
                             ->relationship('categories', 'name')
                             ->multiple()
                             ->preload()
                             ->createOptionForm([
-                                Forms\Components\TextInput::make('name')
+                                TextInput::make('name')
                                     ->required()
                                     ->maxLength(255),
-                                Forms\Components\Textarea::make('description')
+                                Textarea::make('description')
                                     ->rows(3),
                             ]),
                     ]),
@@ -65,57 +78,57 @@ class EventsResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('event_id')
+                TextColumn::make('event_id')
                     ->label('ID')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('name')
+                TextColumn::make('name')
                     ->searchable()
                     ->sortable()
                     ->weight('medium'),
-                Tables\Columns\TextColumn::make('date')
+                TextColumn::make('date')
                     ->dateTime('M j, Y g:i A')
                     ->sortable()
                     ->badge()
                     ->color(fn ($record) => $record->date->isPast() ? 'danger' : 'success'),
-                Tables\Columns\TextColumn::make('location')
+                TextColumn::make('location')
                     ->searchable()
                     ->limit(30),
-                Tables\Columns\TextColumn::make('categories.name')
+                TextColumn::make('categories.name')
                     ->badge()
                     ->separator(',')
                     ->limit(50),
-                Tables\Columns\TextColumn::make('tickets_count')
+                TextColumn::make('tickets_count')
                     ->counts('tickets')
                     ->label('Tickets')
                     ->sortable()
                     ->badge()
                     ->color('info'),
-                Tables\Columns\TextColumn::make('created_at')
+                TextColumn::make('created_at')
                     ->dateTime('M j, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\Filter::make('upcoming')
+                Filter::make('upcoming')
                     ->query(fn (Builder $query): Builder => $query->where('date', '>=', now()))
                     ->label('Upcoming Events')
                     ->default(),
-                Tables\Filters\Filter::make('past')
+                Filter::make('past')
                     ->query(fn (Builder $query): Builder => $query->where('date', '<', now()))
                     ->label('Past Events'),
-                Tables\Filters\SelectFilter::make('categories')
+                SelectFilter::make('categories')
                     ->relationship('categories', 'name')
                     ->multiple()
                     ->preload(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                ViewAction::make(),
+                EditAction::make(),
+                DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('date', 'asc')
