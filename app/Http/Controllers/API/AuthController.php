@@ -5,7 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Users;
+use App\Models\ApiUser;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Resources\UsersResource;
@@ -22,15 +22,18 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $apiErrorHelper = new ApiErrorHelper();
-        if (! Auth::attempt($request->only('email', 'password'))) {
+        
+        // Find user by email
+        $user = ApiUser::where('email', $request->email)->first();
+        
+        // Check if user exists and password is correct
+        if (!$user || !Hash::check($request->password, $user->password_hash)) {
             return response()->json($apiErrorHelper->formatError(
                 title: 'Unauthenticated',
                 status: 401,
                 detail: 'Invalid email or password'
             ), 401);
         }
-
-        $user = Users::where('email', $request->email)->firstOrFail();
 
         $token = $user->createToken('auth_token')->plainTextToken;
         $refreshToken = Str::random(64);
@@ -67,7 +70,7 @@ class AuthController extends Controller
         $apiErrorHelper = new ApiErrorHelper();
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => 'required|string|email|max:255|unique:api_users',
             'password' => 'required|string|min:8|confirmed',
         ], [
             'password.min' => 'Password must be at least 8 characters long.',
@@ -85,7 +88,7 @@ class AuthController extends Controller
             ), 422);
         }
 
-        $user = Users::create([
+        $user = ApiUser::create([
             'full_name' => $request->name,
             'email' => $request->email,
             'password_hash' => Hash::make($request->password),
@@ -110,7 +113,7 @@ class AuthController extends Controller
 
     public function resetPassword(Request $request)
     {
-        $request->validate(['email' => 'required|email|exists:users,email']);
+        $request->validate(['email' => 'required|email|exists:api_users,email']);
 
         $otp = rand(100000, 999999);
         DB::table('password_resets')->updateOrInsert(
@@ -131,7 +134,7 @@ class AuthController extends Controller
     {
         $apiErrorHelper = new ApiErrorHelper();
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email|exists:api_users,email',
             'otp' => 'required'
         ]);
 
@@ -160,7 +163,7 @@ class AuthController extends Controller
     {
         $apiErrorHelper = new ApiErrorHelper();
         $request->validate([
-            'email' => 'required|email|exists:users,email',
+            'email' => 'required|email|exists:api_users,email',
             'otp' => 'required',
             'password' => 'required|string|min:8'
         ]);
@@ -179,7 +182,7 @@ class AuthController extends Controller
             ), 422);
         }
 
-        $user = Users::where('email', $request->email)->first();
+        $user = ApiUser::where('email', $request->email)->first();
         $user->password_hash = Hash::make($request->password);
         $user->save();
 

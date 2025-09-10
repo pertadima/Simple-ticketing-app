@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OrdersResource;
 use App\Models\Orders;
 use App\Models\Tickets;
-use App\Models\Users;
+use App\Models\ApiUser;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Helpers\ApiErrorHelper;
@@ -117,7 +117,7 @@ class OrdersController extends Controller
         //
     }
 
-    private function validateVoucher(?string $code, Users $user, array $tickets): array
+    private function validateVoucher(?string $code, ApiUser $user, array $tickets): array
     {
         $voucher = Vouchers::where('code', $code)->first();
 
@@ -157,7 +157,7 @@ class OrdersController extends Controller
         return ['voucher' => $voucher];
     }
 
-    private function validateAndProcessOrder(array $tickets, Users $user, ?Vouchers $voucher)
+    private function validateAndProcessOrder(array $tickets, ApiUser $user, ?Vouchers $voucher)
     {
         if (!$user->email_verified) {
             return ['errors' => ["You must verify your email before making a purchase"]];

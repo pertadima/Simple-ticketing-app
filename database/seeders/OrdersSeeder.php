@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Enums\IdCardType;
 use App\Enums\OrderStatus;
 use App\Models\Orders;
-use App\Models\Users;
+use App\Models\ApiUser;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
@@ -16,7 +16,7 @@ class OrdersSeeder extends Seeder
      */
     public function run(): void
     {
-        $users = Users::all();
+        $users = ApiUser::all();
         
         if ($users->isEmpty()) {
             $this->command->warn('No users found. Please run UsersSeeder first.');

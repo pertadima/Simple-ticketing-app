@@ -18,7 +18,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'token.expires' => \App\Http\Middleware\TokenExpires::class
+            'token.expires' => \App\Http\Middleware\TokenExpires::class,
+            'auth' => \App\Http\Middleware\Authenticate::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -2,8 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Users;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\ApiUser;
 use Illuminate\Database\Seeder;
 
 class UsersSeeder extends Seeder
@@ -13,7 +12,7 @@ class UsersSeeder extends Seeder
      */
     public function run(): void
     {
-        Users::factory()
+        ApiUser::factory()
         ->count(10)
         ->create();
     }

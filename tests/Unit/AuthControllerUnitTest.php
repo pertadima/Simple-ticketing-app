@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use Tests\TestCase;
 use App\Http\Controllers\API\AuthController;
-use App\Models\Users;
+use App\Models\ApiUser;
 use App\Helpers\ApiErrorHelper;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
@@ -69,9 +69,9 @@ class AuthControllerUnitTest extends TestCase
             'remember_token' => 'sample_token'
         ];
 
-        $user = Users::create($userData);
+        $user = ApiUser::create($userData);
 
-        $this->assertInstanceOf(Users::class, $user);
+        $this->assertInstanceOf(ApiUser::class, $user);
         $this->assertEquals('John Doe', $user->full_name);
         $this->assertEquals('john@example.com', $user->email);
         $this->assertTrue(Hash::check('password123', $user->password_hash));
@@ -99,7 +99,7 @@ class AuthControllerUnitTest extends TestCase
      */
     public function test_token_creation_for_user()
     {
-        $user = Users::factory()->create();
+        $user = ApiUser::factory()->create();
         
         $token = $user->createToken('auth_token');
 
@@ -107,7 +107,7 @@ class AuthControllerUnitTest extends TestCase
         $this->assertNotNull($token->plainTextToken);
         $this->assertDatabaseHas('personal_access_tokens', [
             'tokenable_id' => $user->user_id,
-            'tokenable_type' => Users::class,
+            'tokenable_type' => ApiUser::class,
             'name' => 'auth_token'
         ]);
     }
@@ -117,7 +117,7 @@ class AuthControllerUnitTest extends TestCase
      */
     public function test_token_deletion()
     {
-        $user = Users::factory()->create();
+        $user = ApiUser::factory()->create();
         $token1 = $user->createToken('token1');
         $token2 = $user->createToken('token2');
 
@@ -215,7 +215,7 @@ class AuthControllerUnitTest extends TestCase
      */
     public function test_user_authentication_method()
     {
-        $user = Users::factory()->create([
+        $user = ApiUser::factory()->create([
             'password_hash' => Hash::make('test_password')
         ]);
 

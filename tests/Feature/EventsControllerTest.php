@@ -8,7 +8,7 @@ use App\Models\Tickets;
 use App\Models\TicketCategories;
 use App\Models\TicketTypes;
 use App\Models\Seats;
-use App\Models\Users;
+use App\Models\ApiUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Laravel\Sanctum\Sanctum;
@@ -23,7 +23,7 @@ class EventsControllerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->user = Users::factory()->create();
+        $this->user = ApiUser::factory()->create();
     }
 
     public function test_index_returns_all_events_successfully()

@@ -10,7 +10,7 @@ use App\Models\TicketCategories;
 use App\Models\TicketTypes;
 use App\Models\Seats;
 use App\Models\EventTicketType;
-use App\Models\Users;
+use App\Models\ApiUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -31,7 +31,7 @@ class EventsControllerUnitTest extends TestCase
     {
         parent::setUp();
         $this->controller = new EventsController();
-        $this->user = Users::factory()->create();
+        $this->user = ApiUser::factory()->create();
     }
 
     protected function tearDown(): void

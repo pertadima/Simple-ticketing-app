@@ -2,7 +2,7 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Users;
+use App\Models\ApiUser;
 use App\Models\Events;
 use App\Models\Orders;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -13,7 +13,7 @@ class AdminStatsOverview extends BaseWidget
     protected function getStats(): array
     {
         return [
-            Stat::make('Total Users', Users::count())
+            Stat::make('Total Users', ApiUser::count())
                 ->description('Registered users')
                 ->descriptionIcon('heroicon-m-users')
                 ->color('success'),

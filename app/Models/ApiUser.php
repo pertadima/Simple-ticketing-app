@@ -8,17 +8,20 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\Hash;
 
-class Users extends Authenticatable
+class ApiUser extends Authenticatable
 {
     use HasFactory, Notifiable, HasApiTokens;
 
+    protected $table = 'api_users';
     protected $primaryKey = 'user_id';
+    
     protected $fillable = [
         'email', 
         'password_hash', 
         'full_name',
         'name',
-        'password'
+        'password',
+        'email_verified'
     ];
 
     protected $hidden = [
@@ -30,6 +33,7 @@ class Users extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password_hash' => 'hashed',
+        'email_verified' => 'boolean',
     ];
 
     // Tell Laravel which field to use for authentication

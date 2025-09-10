@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\Orders;
-use App\Models\Users;
+use App\Models\ApiUser;
 use App\Enums\OrderStatus;
 
 class OrdersPolicy
@@ -11,7 +11,7 @@ class OrdersPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function viewAny(Users $user): bool
+    public function viewAny(ApiUser $user): bool
     {
         return false; // Only admins can view all orders
     }
@@ -19,7 +19,7 @@ class OrdersPolicy
     /**
      * Determine whether the user can view the model.
      */
-    public function view(Users $user, Orders $order): bool
+    public function view(ApiUser $user, Orders $order): bool
     {
         return $user->user_id === $order->user_id;
     }
@@ -27,7 +27,7 @@ class OrdersPolicy
     /**
      * Determine whether the user can create models.
      */
-    public function create(Users $user): bool
+    public function create(ApiUser $user): bool
     {
         return $user->email_verified; // Only verified users can create orders
     }
@@ -35,7 +35,7 @@ class OrdersPolicy
     /**
      * Determine whether the user can update the model.
      */
-    public function update(Users $user, Orders $order): bool
+    public function update(ApiUser $user, Orders $order): bool
     {
         return $user->user_id === $order->user_id;
     }
@@ -43,7 +43,7 @@ class OrdersPolicy
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(Users $user, Orders $order): bool
+    public function delete(ApiUser $user, Orders $order): bool
     {
         return false; // Maybe only admins can delete orders
     }
@@ -51,7 +51,7 @@ class OrdersPolicy
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(Users $users, Orders $orders): bool
+    public function restore(ApiUser $users, Orders $orders): bool
     {
         return false;
     }
@@ -59,12 +59,12 @@ class OrdersPolicy
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(Users $users, Orders $orders): bool
+    public function forceDelete(ApiUser $users, Orders $orders): bool
     {
         return false;
     }
 
-    public function markAsPaid(Users $user, Orders $order): bool
+    public function markAsPaid(ApiUser $user, Orders $order): bool
     {
         
         return $user->user_id === $order->user_id && 

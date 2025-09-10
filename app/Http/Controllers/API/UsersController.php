@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OrdersResource;
 use Illuminate\Http\Request;
 use App\Http\Resources\UsersResource;
-use App\Models\Users;
+use App\Models\ApiUser;
 
 class UsersController extends Controller
 {
@@ -29,14 +29,14 @@ class UsersController extends Controller
     /**´
      * Display the specified resource.
      */
-    public function show(Users $users)
+    public function show(ApiUser $users)
     {
         return new UsersResource($users);
     }
 
     public function orders($userId)
     {
-        $user = Users::findOrFail($userId);
+        $user = ApiUser::findOrFail($userId);
         $orders = $user->orders;
 
         return response()->json([

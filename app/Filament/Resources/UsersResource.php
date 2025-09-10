@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use App\Models\Users;
+use App\Models\ApiUser;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -23,11 +23,15 @@ use Filament\Tables;
 
 class UsersResource extends Resource
 {
-    protected static ?string $model = Users::class;
+    protected static ?string $model = ApiUser::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
-    protected static ?string $navigationGroup = 'User Management';
+    protected static ?string $navigationGroup = 'API User Management';
+    
+    protected static ?string $label = 'API Users';
+    
+    protected static ?string $pluralLabel = 'API Users';
 
     protected static ?int $navigationSort = 1;
 

@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use App\Models\Users;
+use App\Models\ApiUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Hash;
@@ -29,7 +29,7 @@ class AuthControllerTest extends TestCase
     public function test_login_with_valid_credentials()
     {
         // Create a user
-        $user = Users::factory()->create([
+        $user = ApiUser::factory()->create([
             'email' => 'test@example.com',
             'password_hash' => Hash::make('password123'),
             'full_name' => 'Test User'
@@ -57,7 +57,7 @@ class AuthControllerTest extends TestCase
         // Assert token was created
         $this->assertDatabaseHas('personal_access_tokens', [
             'tokenable_id' => $user->user_id,
-            'tokenable_type' => Users::class
+            'tokenable_type' => ApiUser::class
         ]);
     }
 
@@ -146,7 +146,7 @@ class AuthControllerTest extends TestCase
     public function test_register_with_existing_email()
     {
         // Create existing user
-        Users::factory()->create(['email' => 'existing@example.com']);
+        ApiUser::factory()->create(['email' => 'existing@example.com']);
 
         $userData = [
             'name' => 'John Doe',
@@ -171,7 +171,7 @@ class AuthControllerTest extends TestCase
      */
     public function test_logout()
     {
-        $user = Users::factory()->create();
+        $user = ApiUser::factory()->create();
         $token = $user->createToken('auth_token')->plainTextToken;
 
         $response = $this->withHeaders([
@@ -189,7 +189,7 @@ class AuthControllerTest extends TestCase
      */
     public function test_reset_password_sends_otp()
     {
-        $user = Users::factory()->create(['email' => 'test@example.com']);
+        $user = ApiUser::factory()->create(['email' => 'test@example.com']);
 
         $response = $this->postJson('/api/v1/auth/reset-password', [
             'email' => 'test@example.com'
@@ -226,7 +226,7 @@ class AuthControllerTest extends TestCase
      */
     public function test_validate_otp_with_valid_otp()
     {
-        $user = Users::factory()->create(['email' => 'test@example.com']);
+        $user = ApiUser::factory()->create(['email' => 'test@example.com']);
         $otp = 123456;
 
         // Insert OTP record
@@ -252,7 +252,7 @@ class AuthControllerTest extends TestCase
      */
     public function test_validate_otp_with_invalid_otp()
     {
-        $user = Users::factory()->create(['email' => 'test@example.com']);
+        $user = ApiUser::factory()->create(['email' => 'test@example.com']);
 
         $response = $this->postJson('/api/v1/auth/validate-otp', [
             'email' => 'test@example.com',
@@ -270,7 +270,7 @@ class AuthControllerTest extends TestCase
      */
     public function test_validate_otp_with_expired_otp()
     {
-        $user = Users::factory()->create(['email' => 'test@example.com']);
+        $user = ApiUser::factory()->create(['email' => 'test@example.com']);
         $otp = 123456;
 
         // Insert expired OTP record
@@ -296,7 +296,7 @@ class AuthControllerTest extends TestCase
      */
     public function test_change_password_with_valid_otp()
     {
-        $user = Users::factory()->create(['email' => 'test@example.com']);
+        $user = ApiUser::factory()->create(['email' => 'test@example.com']);
         $otp = 123456;
 
         // Insert OTP record
@@ -332,7 +332,7 @@ class AuthControllerTest extends TestCase
      */
     public function test_change_password_with_invalid_otp()
     {
-        $user = Users::factory()->create(['email' => 'test@example.com']);
+        $user = ApiUser::factory()->create(['email' => 'test@example.com']);
 
         $response = $this->postJson('/api/v1/auth/change-password', [
             'email' => 'test@example.com',
@@ -351,7 +351,7 @@ class AuthControllerTest extends TestCase
      */
     public function test_refresh_token_with_valid_token()
     {
-        $user = Users::factory()->create();
+        $user = ApiUser::factory()->create();
         $token = $user->createToken('auth_token');
         $refreshToken = 'valid_refresh_token';
 
@@ -411,7 +411,7 @@ class AuthControllerTest extends TestCase
      */
     public function test_refresh_token_with_expired_token()
     {
-        $user = Users::factory()->create();
+        $user = ApiUser::factory()->create();
         $token = $user->createToken('auth_token');
         $refreshToken = 'expired_refresh_token';
 
